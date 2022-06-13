@@ -229,6 +229,7 @@ namespace PlaylistCore {
         if(auto func = GetBackupFunction()) {
             LOG_INFO("Showing backup dialog");
             ShowBackupDialog(func);
+            hasLoaded = true;
             return;
         }
         // clear playlists if requested
