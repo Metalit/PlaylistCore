@@ -427,7 +427,7 @@ namespace PlaylistCore {
     bool IsPlaylistShown(std::string const& path) {
         bool shown = true;
         for(auto& pair : playlistFilters)
-            shown &= pair.second(path);
+            shown = shown && pair.second(path);
         return shown;
     }
 
