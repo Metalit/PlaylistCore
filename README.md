@@ -1,4 +1,4 @@
-# PlaylistManager
+# PlaylistCore
 
 ## Credits
 

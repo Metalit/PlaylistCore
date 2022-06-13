@@ -1,12 +1,8 @@
 #include "Main.hpp"
 #include "Types/SongDownloaderAddon.hpp"
-#include "Types/PlaylistMenu.hpp"
-#include "Types/PlaylistFilters.hpp"
-#include "Types/LevelButtons.hpp"
-#include "Types/GridViewAddon.hpp"
 #include "Types/Scroller.hpp"
 #include "Types/Config.hpp"
-#include "PlaylistManager.hpp"
+#include "PlaylistCore.hpp"
 #include "Settings.hpp"
 #include "Utils.hpp"
 #include "ResettableStaticPtr.hpp"
@@ -23,12 +19,14 @@
 
 #include "GlobalNamespace/StandardLevelDetailViewController.hpp"
 #include "GlobalNamespace/LevelCollectionViewController.hpp"
+#include "GlobalNamespace/LevelCollectionTableView.hpp"
 #include "GlobalNamespace/LevelCollectionNavigationController.hpp"
 #include "GlobalNamespace/LevelPackDetailViewController.hpp"
 #include "GlobalNamespace/LevelPackDetailViewController_ContentType.hpp"
 #include "GlobalNamespace/MenuTransitionsHelper.hpp"
 #include "GlobalNamespace/BeatmapDifficultySegmentedControlController.hpp"
 #include "GlobalNamespace/AnnotatedBeatmapLevelCollectionsViewController.hpp"
+#include "GlobalNamespace/AnnotatedBeatmapLevelCollectionsGridView.hpp"
 #include "GlobalNamespace/AnnotatedBeatmapLevelCollectionsGridViewAnimator.hpp"
 #include "GlobalNamespace/AnnotatedBeatmapLevelCollectionCell.hpp"
 #include "GlobalNamespace/PageControl.hpp"
@@ -65,15 +63,12 @@
 #include "System/Collections/Generic/HashSet_1.hpp"
 
 using namespace GlobalNamespace;
-using namespace PlaylistManager;
+using namespace PlaylistCore;
 
 ModInfo modInfo;
+ModInfo managerModInfo;
 
-// shared config data
 PlaylistConfig playlistConfig;
-Folder* currentFolder = nullptr;
-int filterSelectionState = 0;
-bool allowInMultiplayer = false;
 
 Logger& getLogger() {
     static auto logger = new Logger(modInfo, LoggerOptions(false, true)); 
@@ -81,12 +76,12 @@ Logger& getLogger() {
 }
 
 std::string GetPlaylistsPath() {
-    static std::string playlistsPath(getDataDir(modInfo) + "Playlists");
+    static std::string playlistsPath(getDataDir(managerModInfo) + "Playlists");
     return playlistsPath;
 }
 
 std::string GetBackupsPath() {
-    static std::string backupsPath(getDataDir(modInfo) + "PlaylistBackups");
+    static std::string backupsPath(getDataDir(managerModInfo) + "PlaylistBackups");
     return backupsPath;
 }
 
@@ -96,7 +91,7 @@ std::string GetConfigPath() {
 }
 
 std::string GetCoversPath() {
-    static std::string coversPath(getDataDir(modInfo) + "Covers");
+    static std::string coversPath(getDataDir(managerModInfo) + "Covers");
     return coversPath;
 }
 
@@ -127,41 +122,6 @@ MAKE_HOOK_MATCH(TableView_GetVisibleCellsIdRange, &HMUI::TableView::GetVisibleCe
     }
 
     return TupleType::New_ctor(min, max);
-}
-
-// allow name and author changes to be made on keyboard close (assumes only one keyboard will be open at a time)
-MAKE_HOOK_MATCH(InputFieldView_DeactivateKeyboard, &HMUI::InputFieldView::DeactivateKeyboard,
-        void, HMUI::InputFieldView* self, HMUI::UIKeyboard* keyboard) {
-
-    InputFieldView_DeactivateKeyboard(self, keyboard);
-
-    if(PlaylistMenu::nextCloseKeyboard) {
-        PlaylistMenu::nextCloseKeyboard();
-        PlaylistMenu::nextCloseKeyboard = nullptr;
-    }
-}
-
-// ensure input field clear buttons are updated on their first appearance
-MAKE_HOOK_MATCH(InputFieldView_Awake, &HMUI::InputFieldView::Awake,
-        void, HMUI::InputFieldView* self) {
-    
-    InputFieldView_Awake(self);
-
-    self->UpdateClearButton();
-}
-
-// prevent download icon showing up on empty custom playlists unless configured to
-MAKE_HOOK_MATCH(AnnotatedBeatmapLevelCollectionCell_RefreshAvailabilityAsync, &AnnotatedBeatmapLevelCollectionCell::RefreshAvailabilityAsync,
-        void, AnnotatedBeatmapLevelCollectionCell* self, AdditionalContentModel* contentModel) {
-    
-    AnnotatedBeatmapLevelCollectionCell_RefreshAvailabilityAsync(self, contentModel);
-
-    auto pack = il2cpp_utils::try_cast<IBeatmapLevelPack>(self->annotatedBeatmapLevelCollection);
-    if(pack.has_value()) {
-        auto playlist = GetPlaylistWithPrefix(pack.value()->get_packID());
-        if(playlist)
-            self->SetDownloadIconVisible(playlistConfig.DownloadIcon && PlaylistHasMissingSongs(playlist));
-    }
 }
 
 // override header cell behavior and change no data prefab
@@ -206,22 +166,12 @@ MAKE_HOOK_MATCH(LevelCollectionViewController_SetData, &LevelCollectionViewContr
 MAKE_HOOK_MATCH(AnnotatedBeatmapLevelCollectionsGridView_OnEnable, &AnnotatedBeatmapLevelCollectionsGridView::OnEnable,
         void, AnnotatedBeatmapLevelCollectionsGridView* self) {
 
-    if(playlistConfig.Management) {
-        self->GetComponent<UnityEngine::RectTransform*>()->set_anchorMax({0.83, 1});
-        self->pageControl->content->get_gameObject()->SetActive(false);
-        auto content = self->animator->contentTransform;
-        content->set_anchoredPosition({0, content->get_anchoredPosition().y});
-    } else {
-        self->GetComponent<UnityEngine::RectTransform*>()->set_anchorMax({1, 1});
-        self->pageControl->content->get_gameObject()->SetActive(true);
-        auto content = self->animator->contentTransform;
-        content->set_anchoredPosition({1.5, content->get_anchoredPosition().y});
-    }
+    self->GetComponent<UnityEngine::RectTransform*>()->set_anchorMax({0.83, 1});
+    self->pageControl->content->get_gameObject()->SetActive(false);
+    auto content = self->animator->contentTransform;
+    content->set_anchoredPosition({0, content->get_anchoredPosition().y});
     
     AnnotatedBeatmapLevelCollectionsGridView_OnEnable(self);
-
-    if(!playlistConfig.Management)
-        return;
 
     if(!self->GetComponent<Scroller*>())
         self->get_gameObject()->AddComponent<Scroller*>()->Init(self->animator->contentTransform);
@@ -231,22 +181,19 @@ MAKE_HOOK_MATCH(AnnotatedBeatmapLevelCollectionsGridView_OnEnable, &AnnotatedBea
 MAKE_HOOK_MATCH(AnnotatedBeatmapLevelCollectionsGridViewAnimator_AnimateOpen, &AnnotatedBeatmapLevelCollectionsGridViewAnimator::AnimateOpen,
         void, AnnotatedBeatmapLevelCollectionsGridViewAnimator* self, bool animated) {
     
+    // store actual values to avoid breaking things when closing
     int rowCount = self->rowCount;
     int selectedRow = self->selectedRow;
     
-    if(playlistConfig.Management) {
-        // lock height to specific value
-        self->rowCount = 5;
-        self->selectedRow = 0;
-    }
+    // lock height to specific value
+    self->rowCount = 5;
+    self->selectedRow = 0;
 
     AnnotatedBeatmapLevelCollectionsGridViewAnimator_AnimateOpen(self, animated);
     
-    if(playlistConfig.Management) {
-        // prevent modification of content transform as it overrides the scroll view
-        Tweening::Vector2Tween::_get_Pool()->Despawn(self->contentPositionTween);
-        self->contentPositionTween = nullptr;
-    }
+    // prevent modification of content transform as it overrides the scroll view
+    Tweening::Vector2Tween::_get_Pool()->Despawn(self->contentPositionTween);
+    self->contentPositionTween = nullptr;
     
     self->rowCount = rowCount;
     self->selectedRow = selectedRow;
@@ -262,134 +209,19 @@ MAKE_HOOK_MATCH(AnnotatedBeatmapLevelCollectionsGridViewAnimator_ScrollToRowIdxI
     AnnotatedBeatmapLevelCollectionsGridViewAnimator_ScrollToRowIdxInstant(self, selectedRow);
 }
 
-// when to set up the add playlist button
-MAKE_HOOK_MATCH(LevelFilteringNavigationController_UpdateSecondChildControllerContent, &LevelFilteringNavigationController::UpdateSecondChildControllerContent,
-        void, LevelFilteringNavigationController* self, SelectLevelCategoryViewController::LevelCategory levelCategory) {
-    
-    LevelFilteringNavigationController_UpdateSecondChildControllerContent(self, levelCategory);
-
-    if(!playlistConfig.Management)
-        return;
-    
-    if(!GridViewAddon::addonInstance) {
-        GridViewAddon::addonInstance = new GridViewAddon();
-        GridViewAddon::addonInstance->Init(self->annotatedBeatmapLevelCollectionsViewController);
-    }
-    GridViewAddon::addonInstance->SetVisible(levelCategory == SelectLevelCategoryViewController::LevelCategory::CustomSongs);
-}
-
-// when to show the playlist filters
-MAKE_HOOK_MATCH(LevelFilteringNavigationController_DidActivate, &LevelFilteringNavigationController::DidActivate,
-        void, LevelFilteringNavigationController* self, bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
-    
-    LevelFilteringNavigationController_DidActivate(self, firstActivation, addedToHierarchy, screenSystemEnabling);
-
-    if(!playlistConfig.Management)
-        return;
-
-    if(!PlaylistFilters::filtersInstance) {
-        PlaylistFilters::filtersInstance = new PlaylistFilters();
-        PlaylistFilters::filtersInstance->Init();
-    } else {
-        PlaylistFilters::filtersInstance->SetVisible(true);
-        PlaylistFilters::filtersInstance->UpdateTransform();
-    }
-}
-
-// when to hide the playlist filters
-MAKE_HOOK_MATCH(LevelFilteringNavigationController_DidDeactivate, &LevelFilteringNavigationController::DidDeactivate,
-        void, LevelFilteringNavigationController* self, bool removedFromHierarchy, bool screenSystemDisabling) {
-    
-    LevelFilteringNavigationController_DidDeactivate(self, removedFromHierarchy, screenSystemDisabling);
-
-    if(PlaylistFilters::filtersInstance)
-        PlaylistFilters::filtersInstance->SetVisible(false);
-}
-
-// when to show the playlist menu
-MAKE_HOOK_MATCH(LevelPackDetailViewController_ShowContent, &LevelPackDetailViewController::ShowContent,
-        void, LevelPackDetailViewController* self, LevelPackDetailViewController::ContentType contentType, StringW errorText) {
-    
-    LevelPackDetailViewController_ShowContent(self, contentType, errorText);
-
-    if(!playlistConfig.Management)
-        return;
-
-    static ConstString customPackName(CustomLevelPackPrefixID);
-
-    if(!PlaylistMenu::menuInstance) {
-        PlaylistMenu::menuInstance = self->get_gameObject()->AddComponent<PlaylistMenu*>();
-        PlaylistMenu::menuInstance->Init(self->packImage);
-    }
-
-    if(contentType == LevelPackDetailViewController::ContentType::Owned && self->pack->get_packID()->Contains(customPackName)) {
-        // find playlist json
-        auto playlist = GetPlaylistWithPrefix(self->pack->get_packID());
-        if(playlist) {
-            PlaylistMenu::menuInstance->SetPlaylist(playlist);
-            PlaylistMenu::menuInstance->SetVisible(true);
-        } else
-            PlaylistMenu::menuInstance->SetVisible(false, true);
-    } else
-        PlaylistMenu::menuInstance->SetVisible(false);
-
-    // disable level buttons (hides modal if necessary)
-    if(ButtonsContainer::buttonsInstance)
-        ButtonsContainer::buttonsInstance->SetVisible(false, false, false);
-}
-
-// when to show the level buttons
-MAKE_HOOK_MATCH(StandardLevelDetailViewController_ShowContent, &StandardLevelDetailViewController::ShowContent, 
-        void, StandardLevelDetailViewController* self, StandardLevelDetailViewController::ContentType contentType, StringW errorText, float downloadingProgress, StringW downloadingText) {
-
-    StandardLevelDetailViewController_ShowContent(self, contentType, errorText, downloadingProgress, downloadingText);
-
-    if(!playlistConfig.Management || contentType != StandardLevelDetailViewController::ContentType::OwnedAndReady)
-        return;
-    
-    if(!ButtonsContainer::buttonsInstance) {
-        ButtonsContainer::buttonsInstance = new ButtonsContainer();
-        ButtonsContainer::buttonsInstance->Init(self->standardLevelDetailView);
-    }
-    // note: pack is simply the first level pack it finds that contains the level, if selected from all songs etc.
-    std::string id = self->pack ? self->pack->get_packID() : "";
-    bool customPack = GetPlaylistWithPrefix(id) != nullptr;
-    bool customSong = customPack || id == CustomLevelPackPrefixID "CustomLevels" || id == CustomLevelPackPrefixID "CustomWIPLevels";
-    bool wip = IsWipLevel(self->previewBeatmapLevel);
-    ButtonsContainer::buttonsInstance->SetVisible(customSong, customPack, wip);
-    ButtonsContainer::buttonsInstance->SetLevel(self->previewBeatmapLevel);
-    ButtonsContainer::buttonsInstance->SetPlaylist(GetPlaylistWithPrefix(id));
-    ButtonsContainer::buttonsInstance->RefreshHighlightedDifficulties();
-}
-
-// hook to apply changes when deselecting a cell in a multi select
-MAKE_HOOK_MATCH(TableView_HandleCellSelectionDidChange, &HMUI::TableView::HandleCellSelectionDidChange,
-        void, HMUI::TableView* self, HMUI::SelectableCell* selectableCell, HMUI::SelectableCell::TransitionType transitionType, ::Il2CppObject* changeOwner) {
-    
-    if(self == PlaylistFilters::monitoredTable) {
-        int cellIdx = ((HMUI::TableCell*) selectableCell)->get_idx();
-        bool wasSelected = self->selectedCellIdxs->Contains(cellIdx);
-
-        TableView_HandleCellSelectionDidChange(self, selectableCell, transitionType, changeOwner);
-
-        if(!selectableCell->get_selected() && wasSelected)
-            PlaylistFilters::deselectCallback(cellIdx);
-    } else
-        TableView_HandleCellSelectionDidChange(self, selectableCell, transitionType, changeOwner);
-}
-
 // throw away objects on a soft restart
 MAKE_HOOK_MATCH(MenuTransitionsHelper_RestartGame, &MenuTransitionsHelper::RestartGame,
         void, MenuTransitionsHelper* self, System::Action_1<Zenject::DiContainer*>* finishCallback) {
-    
-    SettingsViewController::DestroyUI();
+
+    for(auto scroller : UnityEngine::Resources::FindObjectsOfTypeAll<Scroller*>()) {
+        UnityEngine::Object::Destroy(scroller);
+    }
     
     ResettableStaticPtr::resetAll();
 
     ClearLoadedImages();
 
     hasLoaded = false;
-    filterSelectionState = 0;
 
     MenuTransitionsHelper_RestartGame(self, finishCallback);
 }
@@ -519,13 +351,17 @@ MAKE_HOOK_MATCH(LevelCollectionNavigationController_DidActivate, &LevelCollectio
 }
 
 extern "C" void setup(ModInfo& info) {
-    modInfo.id = "PlaylistManager";
+    modInfo.id = "PlaylistCore";
     modInfo.version = VERSION;
     info = modInfo;
+    managerModInfo.id = "PlaylistManager";
+    managerModInfo.version = VERSION;
     
     auto playlistsPath = GetPlaylistsPath();
     if(!direxists(playlistsPath))
         mkpath(playlistsPath);
+    
+    LOG_INFO("%s", playlistsPath.c_str());
     
     auto backupsPath = GetBackupsPath();
     if(!direxists(backupsPath))
@@ -547,32 +383,20 @@ extern "C" void setup(ModInfo& info) {
 }
 
 extern "C" void load() {
-    LOG_INFO("Starting PlaylistManager installation...");
+    LOG_INFO("Starting PlaylistCore installation...");
     il2cpp_functions::Init();
     QuestUI::Init();
-    QuestUI::Register::RegisterModSettingsViewController<SettingsViewController*>(modInfo, "Playlist Manager");
+    QuestUI::Register::RegisterModSettingsViewController<SettingsViewController*>(modInfo, "Playlist Core");
     // create fake modInfo for reload playlists button
     ModInfo fakeModInfo;
     fakeModInfo.id = "Reload Playlists";
     QuestUI::Register::RegisterMainMenuModSettingsViewController(fakeModInfo);
-    // get if custom songs are available in multiplayer
-    // requireMod also forces its load function to be called, which is unnecessary, but appears to be the only simple way to check for a mod's existence
-    allowInMultiplayer = Modloader::requireMod("MultiplayerCore");
 
     INSTALL_HOOK_ORIG(getLogger(), TableView_GetVisibleCellsIdRange);
-    INSTALL_HOOK(getLogger(), InputFieldView_DeactivateKeyboard);
-    INSTALL_HOOK(getLogger(), InputFieldView_Awake);
-    INSTALL_HOOK(getLogger(), AnnotatedBeatmapLevelCollectionCell_RefreshAvailabilityAsync);
     INSTALL_HOOK_ORIG(getLogger(), LevelCollectionViewController_SetData);
     INSTALL_HOOK(getLogger(), AnnotatedBeatmapLevelCollectionsGridView_OnEnable);
     INSTALL_HOOK(getLogger(), AnnotatedBeatmapLevelCollectionsGridViewAnimator_AnimateOpen);
     INSTALL_HOOK(getLogger(), AnnotatedBeatmapLevelCollectionsGridViewAnimator_ScrollToRowIdxInstant);
-    INSTALL_HOOK(getLogger(), LevelFilteringNavigationController_UpdateSecondChildControllerContent);
-    INSTALL_HOOK(getLogger(), LevelFilteringNavigationController_DidActivate);
-    INSTALL_HOOK(getLogger(), LevelFilteringNavigationController_DidDeactivate);
-    INSTALL_HOOK(getLogger(), LevelPackDetailViewController_ShowContent);
-    INSTALL_HOOK(getLogger(), StandardLevelDetailViewController_ShowContent);
-    INSTALL_HOOK(getLogger(), TableView_HandleCellSelectionDidChange);
     INSTALL_HOOK(getLogger(), MenuTransitionsHelper_RestartGame);
     INSTALL_HOOK(getLogger(), MainMenuModSettingsViewController_DidActivate);
     INSTALL_HOOK(getLogger(), DownloadSongsFlowCoordinator_DidActivate);
@@ -589,21 +413,5 @@ extern "C" void load() {
             MarkPlaylistForReload(playlist);
     });
     
-    AddPlaylistFilter(modInfo, [](std::string const& path) -> bool {
-        if(path == "Defaults") {
-            bool showDefaults = filterSelectionState != 2;
-            if(filterSelectionState == 3 && currentFolder && !currentFolder->HasSubfolders)
-                showDefaults = currentFolder->ShowDefaults;
-            return showDefaults;
-        }
-        if(filterSelectionState == 3 && currentFolder && !currentFolder->HasSubfolders) {
-            for(std::string& testPath : currentFolder->Playlists) {
-                if(path == testPath)
-                    return true;
-            }
-            return false;
-        }
-        return filterSelectionState != 1;
-    });
-    LOG_INFO("Successfully installed PlaylistManager!");
+    LOG_INFO("Successfully installed PlaylistCore!");
 }

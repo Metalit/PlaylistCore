@@ -1,16 +1,15 @@
 #include "Main.hpp"
-#include "Types/CustomListSource.hpp"
-#include "Icons.hpp"
+#include "CustomTypes/CustomListSource.hpp"
 
 #include "questui/shared/BeatSaberUI.hpp"
 #include "questui/shared/CustomTypes/Components/List/QuestUITableView.hpp"
 
 #include "HMUI/TableView_ScrollPositionType.hpp"
 
-DEFINE_TYPE(PlaylistManager, CustomTableCell);
-DEFINE_TYPE(PlaylistManager, CustomListSource);
+DEFINE_TYPE(PlaylistCore, CustomTableCell);
+DEFINE_TYPE(PlaylistCore, CustomListSource);
 
-using namespace PlaylistManager;
+using namespace PlaylistCore;
 using namespace QuestUI;
 
 // copied from questui
@@ -18,7 +17,7 @@ void CustomListSource::ctor() {
     INVOKE_CTOR();
     expandCell = false;
     tableView = nullptr;
-    static ConstString reuseName("PlaylistManagerListCell");
+    static ConstString reuseName("PlaylistCoreListCell");
     reuseIdentifier = reuseName;
 }
 

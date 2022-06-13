@@ -8,7 +8,7 @@
 #include "HMUI/TableView_IDataSource.hpp"
 #include "HMUI/TableCell.hpp"
 
-DECLARE_CLASS_CODEGEN(PlaylistManager, CustomTableCell, HMUI::TableCell,
+DECLARE_CLASS_CODEGEN(PlaylistCore, CustomTableCell, HMUI::TableCell,
 
     DECLARE_OVERRIDE_METHOD(void, SelectionDidChange, il2cpp_utils::il2cpp_type_check::MetadataGetter<&HMUI::SelectableCell::SelectionDidChange>::get(), HMUI::SelectableCell::TransitionType transitionType);
     DECLARE_OVERRIDE_METHOD(void, HighlightDidChange, il2cpp_utils::il2cpp_type_check::MetadataGetter<&HMUI::SelectableCell::HighlightDidChange>::get(), HMUI::SelectableCell::TransitionType transitionType);
@@ -26,7 +26,7 @@ DECLARE_CLASS_CODEGEN(PlaylistManager, CustomTableCell, HMUI::TableCell,
     void setText(std::string text) { setTextFunc(text); }
 )
 
-___DECLARE_TYPE_WRAPPER_INHERITANCE(PlaylistManager, CustomListSource, Il2CppTypeEnum::IL2CPP_TYPE_CLASS, UnityEngine::MonoBehaviour, "PlaylistManager", { classof(HMUI::TableView::IDataSource*) }, 0, nullptr,
+___DECLARE_TYPE_WRAPPER_INHERITANCE(PlaylistCore, CustomListSource, Il2CppTypeEnum::IL2CPP_TYPE_CLASS, UnityEngine::MonoBehaviour, "PlaylistManager", { classof(HMUI::TableView::IDataSource*) }, 0, nullptr,
     
     DECLARE_INSTANCE_FIELD(Il2CppString*, reuseIdentifier);
     DECLARE_INSTANCE_FIELD(HMUI::TableView*, tableView);

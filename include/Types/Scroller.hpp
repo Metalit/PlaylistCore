@@ -8,7 +8,7 @@
 #include "UnityEngine/EventSystems/PointerEventData.hpp"
 #include "GlobalNamespace/IVRPlatformHelper.hpp"
 
-DECLARE_CLASS_CODEGEN(PlaylistManager, Scroller, UnityEngine::MonoBehaviour,
+DECLARE_CLASS_CODEGEN(PlaylistCore, Scroller, UnityEngine::MonoBehaviour,
 
     private:
     Scroller* cachedPtr = nullptr;

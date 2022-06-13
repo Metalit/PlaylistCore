@@ -1,5 +1,5 @@
 #include "Main.hpp"
-#include "PlaylistManager.hpp"
+#include "PlaylistCore.hpp"
 #include "Utils.hpp"
 #include "Backup.hpp"
 #include "ResettableStaticPtr.hpp"
@@ -14,7 +14,7 @@
 
 #include <filesystem>
 
-using namespace PlaylistManager;
+using namespace PlaylistCore;
 using namespace QuestUI;
 
 // returns the match of a type in a list of it, or the search object if not found
@@ -180,11 +180,11 @@ HMUI::ModalView* MakeDialog() {
     });
     UnityEngine::Object::Destroy(cancelButton->get_transform()->Find(contentName)->GetComponent<UnityEngine::UI::LayoutElement*>());
 
-    TMPro::TextMeshProUGUI* title = BeatSaberUI::CreateText(modal->get_transform(), "Playlist Manager", false, {0, 16}, {60, 8.5});
+    TMPro::TextMeshProUGUI* title = BeatSaberUI::CreateText(modal->get_transform(), "Playlist Core", false, {0, 16}, {60, 8.5});
     title->set_alignment(TMPro::TextAlignmentOptions::Center);
     title->set_fontStyle(TMPro::FontStyles::Bold);
 
-    static ConstString dialogText("External playlist modifications detected (likely through BMBF). Changes made by Playlist Manager may be lost. Would you like to revert or keep the changes?");
+    static ConstString dialogText("External playlist modifications detected (likely through BMBF). Changes made ingame may be lost. Would you like to revert or keep the changes?");
 
     TMPro::TextMeshProUGUI* message = QuestUI::BeatSaberUI::CreateText(modal->get_transform(), dialogText, false, {0, 2}, {60, 25.5});
     message->set_enableWordWrapping(true);

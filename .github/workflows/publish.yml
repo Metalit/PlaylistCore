@@ -1,8 +1,8 @@
 name: Publish QPM Package
 
 env:
-    module_id: playlistmanager
-    qmodName: PlaylistManager
+    module_id: playlistcore
+    qmodName: PlaylistCore
 
 on:
   push:

@@ -16,11 +16,11 @@
 // however, it could likely be made more versatile with a few changes
 // of course, it would be nice if I could just use a regular ScrollView without it crashing...
 
-DEFINE_TYPE(PlaylistManager, Scroller);
+DEFINE_TYPE(PlaylistCore, Scroller);
 
 #define ACTION_1(type, methodname) il2cpp_utils::MakeDelegate<System::Action_1<type>*>((std::function<void(type)>) [this](type arg){if(this->cachedPtr == this) methodname(arg);})
 
-using namespace PlaylistManager;
+using namespace PlaylistCore;
 
 float fixedCellHeight = 15;
 

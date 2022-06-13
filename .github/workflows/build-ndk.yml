@@ -7,7 +7,7 @@ on:
 jobs:
   build:
     env:
-      module_id: playlistmanager
+      module_id: playlistcore
     runs-on: ubuntu-latest
     
     steps:

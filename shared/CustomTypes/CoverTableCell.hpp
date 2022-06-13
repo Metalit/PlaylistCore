@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Types/CustomListSource.hpp"
+#include "CustomTypes/CustomListSource.hpp"
 
 #include "HMUI/ImageView.hpp"
 #include "HMUI/HoverHint.hpp"
 
-DECLARE_CLASS_CUSTOM(PlaylistManager, CoverTableCell, PlaylistManager::CustomTableCell,
+DECLARE_CLASS_CUSTOM(PlaylistCore, CoverTableCell, PlaylistCore::CustomTableCell,
 
     DECLARE_INSTANCE_FIELD(HMUI::ImageView*, coverImage);
     DECLARE_INSTANCE_FIELD(HMUI::ImageView*, selectedImage);

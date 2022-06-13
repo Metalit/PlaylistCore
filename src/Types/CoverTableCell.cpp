@@ -1,5 +1,5 @@
 #include "Main.hpp"
-#include "Types/CoverTableCell.hpp"
+#include "CustomTypes/CoverTableCell.hpp"
 #include "ResettableStaticPtr.hpp"
 
 #include "questui/shared/BeatSaberUI.hpp"
@@ -9,10 +9,10 @@
 #include "UnityEngine/GameObject.hpp"
 #include "UnityEngine/Resources.hpp"
 
-using namespace PlaylistManager;
+using namespace PlaylistCore;
 using namespace QuestUI;
 
-DEFINE_TYPE(PlaylistManager, CoverTableCell);
+DEFINE_TYPE(PlaylistCore, CoverTableCell);
 
 // "polymorphism"
 void CoverTableCell::ctor() {

@@ -34,11 +34,11 @@ class SearchEntryHack {
     MapType MapType;
 };
 
-namespace PlaylistManager {
+namespace PlaylistCore {
     class Playlist;
 }
 
-DECLARE_CLASS_CODEGEN(PlaylistManager, SongDownloaderAddon, HMUI::ViewController,
+DECLARE_CLASS_CODEGEN(PlaylistCore, SongDownloaderAddon, HMUI::ViewController,
 
     private:
     class CustomListSource *list;

@@ -2,12 +2,12 @@
   "sharedDir": "shared",
   "dependenciesDir": "extern",
   "info": {
-    "name": "PlaylistManager",
-    "id": "playlistmanager",
+    "name": "PlaylistCore",
+    "id": "playlistcore",
     "version": "1.1.0",
-    "url": "https://github.com/Metalit/PlaylistManager",
+    "url": "https://github.com/Metalit/PlaylistCore",
     "additionalData": {
-      "overrideSoName": "libplaylistmanager.so"
+      "overrideSoName": "libplaylistcore.so"
     }
   },
   "dependencies": [

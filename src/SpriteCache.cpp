@@ -8,7 +8,7 @@ std::unordered_map<Sprite*, GameObject*> caches;
 
 void CacheSprite(Sprite* sprite) {
     if(!caches.contains(sprite)) {
-        static ConstString name("PlaylistManagerCachedSprite");
+        static ConstString name("PlaylistCoreCachedSprite");
         auto object = GameObject::New_ctor(name);
         object->AddComponent<UI::Image*>()->set_sprite(sprite);
         Object::DontDestroyOnLoad(object);

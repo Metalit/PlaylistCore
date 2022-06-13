@@ -1,9 +1,8 @@
 #include "Main.hpp"
 #include "Types/SongDownloaderAddon.hpp"
-#include "Types/CustomListSource.hpp"
-#include "Types/CoverTableCell.hpp"
-#include "PlaylistManager.hpp"
-#include "Icons.hpp"
+#include "CustomTypes/CustomListSource.hpp"
+#include "CustomTypes/CoverTableCell.hpp"
+#include "PlaylistCore.hpp"
 
 #include "questui/shared/BeatSaberUI.hpp"
 
@@ -12,9 +11,9 @@
 #include "HMUI/TableView_ScrollPositionType.hpp"
 #include "System/Collections/Generic/HashSet_1.hpp"
 
-DEFINE_TYPE(PlaylistManager, SongDownloaderAddon);
+DEFINE_TYPE(PlaylistCore, SongDownloaderAddon);
 
-using namespace PlaylistManager;
+using namespace PlaylistCore;
 using namespace QuestUI;
 
 Playlist* SongDownloaderAddon::SelectedPlaylist = nullptr;
