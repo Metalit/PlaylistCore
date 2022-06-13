@@ -69,6 +69,7 @@ ModInfo modInfo;
 ModInfo managerModInfo;
 
 PlaylistConfig playlistConfig;
+bool hasManager;
 
 Logger& getLogger() {
     static auto logger = new Logger(modInfo, LoggerOptions(false, true)); 
@@ -207,6 +208,23 @@ MAKE_HOOK_MATCH(AnnotatedBeatmapLevelCollectionsGridViewAnimator_ScrollToRowIdxI
     self->AnimateClose(selectedRow, false);
 
     AnnotatedBeatmapLevelCollectionsGridViewAnimator_ScrollToRowIdxInstant(self, selectedRow);
+}
+
+// prevent download icon showing up on empty custom playlists unless manager is changing the behavior
+MAKE_HOOK_MATCH(AnnotatedBeatmapLevelCollectionCell_RefreshAvailabilityAsync, &AnnotatedBeatmapLevelCollectionCell::RefreshAvailabilityAsync,
+        void, AnnotatedBeatmapLevelCollectionCell* self, AdditionalContentModel* contentModel) {
+    
+    AnnotatedBeatmapLevelCollectionCell_RefreshAvailabilityAsync(self, contentModel);
+
+    if(hasManager)
+        return;
+
+    auto pack = il2cpp_utils::try_cast<IBeatmapLevelPack>(self->annotatedBeatmapLevelCollection);
+    if(pack.has_value()) {
+        auto playlist = GetPlaylistWithPrefix(pack.value()->get_packID());
+        if(playlist)
+            self->SetDownloadIconVisible(false);
+    }
 }
 
 // throw away objects on a soft restart
@@ -392,11 +410,14 @@ extern "C" void load() {
     fakeModInfo.id = "Reload Playlists";
     QuestUI::Register::RegisterMainMenuModSettingsViewController(fakeModInfo);
 
+    hasManager = Modloader::requireMod("PlaylistManager");
+
     INSTALL_HOOK_ORIG(getLogger(), TableView_GetVisibleCellsIdRange);
     INSTALL_HOOK_ORIG(getLogger(), LevelCollectionViewController_SetData);
     INSTALL_HOOK(getLogger(), AnnotatedBeatmapLevelCollectionsGridView_OnEnable);
     INSTALL_HOOK(getLogger(), AnnotatedBeatmapLevelCollectionsGridViewAnimator_AnimateOpen);
     INSTALL_HOOK(getLogger(), AnnotatedBeatmapLevelCollectionsGridViewAnimator_ScrollToRowIdxInstant);
+    INSTALL_HOOK(getLogger(), AnnotatedBeatmapLevelCollectionCell_RefreshAvailabilityAsync);
     INSTALL_HOOK(getLogger(), MenuTransitionsHelper_RestartGame);
     INSTALL_HOOK(getLogger(), MainMenuModSettingsViewController_DidActivate);
     INSTALL_HOOK(getLogger(), DownloadSongsFlowCoordinator_DidActivate);
