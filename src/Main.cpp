@@ -306,7 +306,7 @@ MAKE_HOOK_FIND_CLASS_INSTANCE(DownloadSongsSearchViewController_DidActivate, "So
         SearchEntryHack* entryArrStart = (SearchEntryHack*) (((char*) self) + sizeof(HMUI::ViewController));
         // capture button array start and index
         downloadButton->get_onClick()->AddListener(il2cpp_utils::MakeDelegate<Events::UnityAction*>((std::function<void()>) [entryArrStart, i] {
-            auto& entry = *(entryArrStart + i);
+            auto& entry = *(entryArrStart + i + 1);
             // get hash from entry
             std::string hash;
             if(entry.MapType == SearchEntryHack::MapType::BeatSaver)
