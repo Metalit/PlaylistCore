@@ -212,7 +212,7 @@ namespace PlaylistCore {
         }
     }
 
-    std::vector<UnityEngine::Sprite*>& GetLoadedImages() {
+    std::vector<UnityEngine::Sprite*> const& GetLoadedImages() {
         return loadedImages;
     }
 

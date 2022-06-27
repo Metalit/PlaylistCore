@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CustomTypes/CustomListSource.hpp"
+#include "CustomListSource.hpp"
 
 #include "HMUI/ImageView.hpp"
 #include "HMUI/HoverHint.hpp"

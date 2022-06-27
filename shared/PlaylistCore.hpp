@@ -41,7 +41,7 @@ namespace PlaylistCore {
 
     /// @brief Gets all images that are loaded
     /// @return A vector of all loaded images in order
-    std::vector<UnityEngine::Sprite*>& GetLoadedImages();
+    std::vector<UnityEngine::Sprite*> const& GetLoadedImages();
 
     /// @brief Unloads all loaded images
     void ClearLoadedImages();
