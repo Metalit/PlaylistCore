@@ -224,6 +224,7 @@ namespace PlaylistCore {
     }
 
     void LoadPlaylists(SongLoaderBeatmapLevelPackCollectionSO* customBeatmapLevelPackCollectionSO, bool fullReload) {
+        LOG_INFO("Loading playlists");
         RemoveAllBMBFSuffixes();
         LoadCoverImages();
         if(auto func = GetBackupFunction()) {
@@ -243,6 +244,7 @@ namespace PlaylistCore {
             return;
         // clear out old playlists if showDefaults is off
         if(!IsPlaylistShown("Defaults")) {
+            LOG_INFO("Removing default playlists from being shown");
             GlobalNamespace::CustomBeatmapLevelPack *customsPack = nullptr, *customWIPsPack = nullptr;
             for(auto& pack : customBeatmapLevelPackCollectionSO->customBeatmapLevelPacks->items) {
                 if(!pack)
@@ -372,7 +374,6 @@ namespace PlaylistCore {
             }
         }
         SaveConfig();
-        needsReloadPlaylists.clear();
         hasLoaded = true;
         LOG_INFO("Playlists loaded");
     }

@@ -21,7 +21,6 @@
 #include "GlobalNamespace/IAnnotatedBeatmapLevelCollection.hpp"
 #include "GlobalNamespace/AnnotatedBeatmapLevelCollectionsGridView.hpp"
 #include "GlobalNamespace/PageControl.hpp"
-#include "GlobalNamespace/AnnotatedBeatmapLevelCollectionsViewController.hpp"
 #include "GlobalNamespace/AnnotatedBeatmapLevelCollectionsGridViewAnimator.hpp"
 #include "GlobalNamespace/BeatmapLevelsModel.hpp"
 #include "GlobalNamespace/LevelSearchViewController.hpp"
@@ -172,7 +171,9 @@ namespace PlaylistCore {
         void SetCustomPacks(List<GlobalNamespace::IBeatmapLevelPack*>* newPlaylists, bool updateSongs) {
             using namespace GlobalNamespace;
             auto packArray = newPlaylists->ToArray();
-            auto packReadOnly = (System::Collections::Generic::IReadOnlyList_1<IAnnotatedBeatmapLevelCollection*>*) newPlaylists->AsReadOnly();
+            // more virtual pain
+            // auto packReadOnly = (System::Collections::Generic::IReadOnlyList_1<IAnnotatedBeatmapLevelCollection*>*) newPlaylists->AsReadOnly();
+            auto packReadOnly = (System::Collections::Generic::IReadOnlyList_1<IAnnotatedBeatmapLevelCollection*>*) packArray.convert();
             // update in levels model to avoid resetting
             auto levelsModel = FindComponent<BeatmapLevelsModel*>();
             levelsModel->customLevelPackCollection = (IBeatmapLevelPackCollection*) BeatmapLevelPackCollection::New_ctor(packArray);
@@ -180,7 +181,6 @@ namespace PlaylistCore {
             auto navigationController = FindComponent<GlobalNamespace::LevelFilteringNavigationController*>();
             if(!navigationController || !navigationController->get_isInViewControllerHierarchy())
                 return;
-            auto collectionsViewController = navigationController->annotatedBeatmapLevelCollectionsViewController;
             navigationController->customLevelPacks = packArray;
             auto gameTableView = FindComponent<AnnotatedBeatmapLevelCollectionsGridView*>();
             // only update the game table if custom songs are selected
