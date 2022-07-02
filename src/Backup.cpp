@@ -164,7 +164,7 @@ HMUI::ModalView* MakeDialog() {
 
     static ConstString contentName("Content");
 
-    auto restoreButton = BeatSaberUI::CreateUIButton(modal->get_transform(), "Revert", "ActionButton", {-16, -14}, [modal] {
+    auto restoreButton = BeatSaberUI::CreateUIButton(modal->get_transform(), "No", "ActionButton", {-16, -14}, [modal] {
         LOG_INFO("Restoring backup");
         modal->Hide(true, nullptr);
         backupFunction();
@@ -172,7 +172,7 @@ HMUI::ModalView* MakeDialog() {
     });
     UnityEngine::Object::Destroy(restoreButton->get_transform()->Find(contentName)->GetComponent<UnityEngine::UI::LayoutElement*>());
 
-    auto cancelButton = QuestUI::BeatSaberUI::CreateUIButton(modal->get_transform(), "Keep", {16, -14}, [modal] {
+    auto cancelButton = QuestUI::BeatSaberUI::CreateUIButton(modal->get_transform(), "Yes", {16, -14}, [modal] {
         modal->Hide(true, nullptr);
         std::filesystem::remove_all(GetBackupsPath());
         std::filesystem::copy(GetPlaylistsPath(), GetBackupsPath());
@@ -184,7 +184,7 @@ HMUI::ModalView* MakeDialog() {
     title->set_alignment(TMPro::TextAlignmentOptions::Center);
     title->set_fontStyle(TMPro::FontStyles::Bold);
 
-    static ConstString dialogText("External playlist modifications detected (likely through BMBF). Changes made ingame may be lost. Would you like to revert or keep the changes?");
+    static ConstString dialogText("External playlist modifications detected (likely through BMBF). Changes made ingame may be lost. Would you like to keep the external changes?");
 
     TMPro::TextMeshProUGUI* message = QuestUI::BeatSaberUI::CreateText(modal->get_transform(), dialogText, false, {0, 2}, {60, 25.5});
     message->set_enableWordWrapping(true);
