@@ -716,6 +716,11 @@ namespace PlaylistCore {
         playlist->Save();
     }
 
+    void RemoveSongFromAllPlaylists(GlobalNamespace::IPreviewBeatmapLevel* level) {
+        for(auto& pair : path_playlists)
+            RemoveSongFromPlaylist(pair.second, level);
+    }
+
     void SetSongIndex(Playlist* playlist, GlobalNamespace::IPreviewBeatmapLevel* level, int index) {
         if(!level)
             return;

@@ -139,6 +139,10 @@ namespace PlaylistCore {
     /// @param level The song to remove from the playlist
     void RemoveSongFromPlaylist(Playlist* playlist, GlobalNamespace::IPreviewBeatmapLevel* level);
 
+    /// @brief Removes a song from all loaded playlists - does not reload playlists
+    /// @param level The song to remove from all playlists
+    void RemoveSongFromAllPlaylists(GlobalNamespace::IPreviewBeatmapLevel* level);
+
     /// @brief Changes the index of a song inside a playlist - does not reload playlists
     /// @param playlist The playlist containing the song to be reordered
     /// @param index The new index for the song to be at
