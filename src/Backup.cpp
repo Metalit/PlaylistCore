@@ -22,7 +22,9 @@ template<class T>
 T& IdentifyMatch(T& backup, std::vector<T>& objs);
 
 BPSong& IdentifyMatch(BPSong& backup, std::vector<BPSong>& objs) {
+    std::transform(backup.Hash.begin(), backup.Hash.end(), backup.Hash.begin(), toupper);
     for(auto& obj : objs) {
+        std::transform(obj.Hash.begin(), obj.Hash.end(), obj.Hash.begin(), toupper);
         if(obj.Hash == backup.Hash)
             return obj;
     }
