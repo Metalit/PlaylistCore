@@ -611,6 +611,8 @@ namespace PlaylistCore {
                 finishCallback();
             return;
         }
+        if(updateCallback)
+            updateCallback(0, quantity);
         // keep track of how many songs need to be downloaded
         // use new so that it isn't freed when the function returns, before songs finish downloading
         static std::mutex queueLock{};
