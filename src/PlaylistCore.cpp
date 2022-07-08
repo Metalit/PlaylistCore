@@ -10,7 +10,6 @@
 
 #include <filesystem>
 #include <fstream>
-#include <thread>
 
 #include "beatsaber-hook/shared/utils/il2cpp-utils.hpp"
 
@@ -572,12 +571,51 @@ namespace PlaylistCore {
         return songsMissing;
     }
 
-    void DownloadMissingSongsFromPlaylist(Playlist* playlist, std::function<void()> finishCallback) {
+    void DownloadSongsHelper(std::mutex& queueLock, std::shared_ptr<std::vector<std::optional<BeatSaver::Beatmap>>> songQueue,
+            std::function<void()> finishCallback, std::function<void(int, int)> updateCallback, int total) {
+        queueLock.lock();
+        if(songQueue->empty()) {
+            queueLock.unlock();
+            return;
+        }
+        std::optional<BeatSaver::Beatmap> beatmap(songQueue->back());
+        songQueue->pop_back();
+        queueLock.unlock();
+        // download if beatmap is found, then run next beatmap either way
+        if(beatmap.has_value()) {
+            BeatSaver::API::DownloadBeatmapAsync(beatmap.value(), [&queueLock, songQueue, finishCallback, updateCallback, total](bool _){
+                if(updateCallback)
+                    QuestUI::MainThreadScheduler::Schedule([updateCallback, total, num = total - songQueue->size()]() { updateCallback(num, total); });
+                if(!songQueue->empty())
+                    DownloadSongsHelper(queueLock, songQueue, finishCallback, updateCallback, total);
+                else if(songQueue.unique() && finishCallback)
+                    QuestUI::MainThreadScheduler::Schedule(finishCallback);
+            });
+        } else {
+            LOG_INFO("Beatmap not found on beatsaver");
+            if(updateCallback)
+                QuestUI::MainThreadScheduler::Schedule([updateCallback, total, num = total - songQueue->size()]() { updateCallback(num, total); });
+            if(!songQueue->empty())
+                DownloadSongsHelper(queueLock, songQueue, finishCallback, updateCallback, total);
+            else if(songQueue.unique() && finishCallback)
+                QuestUI::MainThreadScheduler::Schedule(finishCallback);
+        }
+    }
+
+    void DownloadMissingSongsFromPlaylist(Playlist* playlist, std::function<void()> finishCallback, std::function<void(int, int)> updateCallback) {
+        static const short concurrentSongDownloads = 3;
+        // find number of songs that need to be in the queue before downloading
+        int quantity = PlaylistHasMissingSongs(playlist);
+        if(quantity == 0) {
+            if(finishCallback)
+                finishCallback();
+            return;
+        }
         // keep track of how many songs need to be downloaded
         // use new so that it isn't freed when the function returns, before songs finish downloading
-        auto songsLeft = new std::atomic_int(0);
+        static std::mutex queueLock{};
+        auto songQueue = std::make_shared<std::vector<std::optional<BeatSaver::Beatmap>>>();
         // keep track of if any songs were downloaded to clean up if none were
-        bool songsMissing = false;
         for(auto& song : playlist->playlistJSON.Songs) {
             std::string& hash = song.Hash;
             LOWER(hash);
@@ -593,34 +631,15 @@ namespace PlaylistCore {
             }
             if(hasSong)
                 continue;
-            songsMissing = true;
-            *songsLeft += 1;
-            BeatSaver::API::GetBeatmapByHashAsync(hash, [songsLeft, hash, finishCallback](std::optional<BeatSaver::Beatmap> beatmap){
-                // after beatmap is found, download if successful, but decrement songsLeft either way
-                if(beatmap.has_value()) {
-                    BeatSaver::API::DownloadBeatmapAsync(beatmap.value(), [songsLeft, finishCallback](bool _){
-                        *songsLeft -= 1;
-                        if(*songsLeft == 0) {
-                            delete songsLeft;
-                            if(finishCallback)
-                                QuestUI::MainThreadScheduler::Schedule(finishCallback);
-                        }
-                    });
-                } else {
-                    LOG_INFO("Beatmap with hash %s not found on beatsaver", hash.c_str());
-                    *songsLeft -= 1;
-                    if(*songsLeft == 0) {
-                        delete songsLeft;
-                        if(finishCallback)
-                            QuestUI::MainThreadScheduler::Schedule(finishCallback);
-                    }
+            BeatSaver::API::GetBeatmapByHashAsync(hash, [songQueue, quantity, finishCallback, updateCallback](std::optional<BeatSaver::Beatmap> beatmap){
+                queueLock.lock();
+                songQueue->emplace_back(std::move(beatmap));
+                queueLock.unlock();
+                if(songQueue->size() == quantity) {
+                    for(int i = 0; i < concurrentSongDownloads && i < quantity; i++) {}
+                        DownloadSongsHelper(queueLock, songQueue, finishCallback, updateCallback, quantity);
                 }
             });
-        }
-        if(!songsMissing) {
-            delete songsLeft;
-            if(finishCallback)
-                finishCallback();
         }
     }
 
