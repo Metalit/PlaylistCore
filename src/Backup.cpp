@@ -17,6 +17,20 @@
 using namespace PlaylistCore;
 using namespace QuestUI;
 
+bool FixImageString(std::optional<std::string>& optional) {
+    // trim "data:image/png;base64,"-like metadata
+    if(optional.has_value()) {
+        std::string& str = optional.value();
+        static std::string searchString = "base64,";
+        auto searchIndex = str.find(searchString);
+        if(searchIndex != std::string::npos) {
+            str = str.substr(searchIndex + searchString.length());
+            return true;
+        }
+    }
+    return false;
+}
+
 // returns the match of a type in a list of it, or the search object if not found
 template<class T>
 T& IdentifyMatch(T& backup, std::vector<T>& objs);
@@ -83,6 +97,10 @@ bool ProcessBackup(BPList& obj, BPList& backup) {
     }
     // restore customData if removed
     changed |= ProcessBackup(obj.CustomData, backup.CustomData);
+    // remove annoying data at the start of the image string
+    changed |= FixImageString(obj.ImageString);
+    // restore image if removed
+    changed |= ProcessBackup(obj.ImageString, backup.ImageString);
     return changed;
 }
 
