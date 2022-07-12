@@ -8,6 +8,8 @@
 
 #include "GlobalNamespace/SharedCoroutineStarter.hpp"
 #include "UnityEngine/WaitForFixedUpdate.hpp"
+#include "UnityEngine/ImageConversion.hpp"
+#include "System/Convert.hpp"
 
 #include "questui/shared/BeatSaberUI.hpp"
 #include "custom-types/shared/coroutine.hpp"
@@ -18,17 +20,25 @@ using namespace PlaylistCore;
 using namespace QuestUI;
 
 bool FixImageString(std::optional<std::string>& optional) {
+    if(!optional.has_value())
+        return false;
+    static std::hash<std::string> hasher;
+    bool changed = false;
     // trim "data:image/png;base64,"-like metadata
-    if(optional.has_value()) {
-        std::string& str = optional.value();
-        static std::string searchString = "base64,";
-        auto searchIndex = str.find(searchString);
-        if(searchIndex != std::string::npos) {
-            str = str.substr(searchIndex + searchString.length());
-            return true;
-        }
+    std::string& str = optional.value();
+    static std::string searchString = "base64,";
+    auto searchIndex = str.find(searchString);
+    if(searchIndex != std::string::npos) {
+        str = str.substr(searchIndex + searchString.length());
+        changed |= true;
     }
-    return false;
+    // downscale image, texture should be cleaned up by unity sometime later
+    std::size_t oldHash = hasher(str);
+    auto texture = UnityEngine::Texture2D::New_ctor(0, 0, UnityEngine::TextureFormat::RGBA32, false, false);
+    UnityEngine::ImageConversion::LoadImage(texture, System::Convert::FromBase64String(str));
+    str = std::move(Utils::ProcessImage(texture, true));
+    changed |= hasher(str) != oldHash;
+    return changed;
 }
 
 // returns the match of a type in a list of it, or the search object if not found
