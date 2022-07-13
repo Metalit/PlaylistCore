@@ -23,9 +23,10 @@ DEFINE_TYPE(PlaylistCore, Scroller);
 using namespace PlaylistCore;
 
 float fixedCellHeight = 15;
+float Scroller::scrollSpeed;
 
 void UpdateScrollSpeed() {
-    Scroller::scrollSpeed() = 45 * playlistConfig.ScrollSpeed;
+    Scroller::scrollSpeed = 45 * playlistConfig.ScrollSpeed;
 }
 
 void Scroller::Awake() {
@@ -84,7 +85,7 @@ void Scroller::HandleJoystickWasNotCenteredThisFrame(UnityEngine::Vector2 deltaP
     if(!pointerHovered)
         return;
     float num = destinationPos;
-    num -= deltaPos.y * UnityEngine::Time::get_deltaTime() * Scroller::scrollSpeed();
+    num -= deltaPos.y * UnityEngine::Time::get_deltaTime() * Scroller::scrollSpeed;
     SetDestinationPos(num);
 }
 

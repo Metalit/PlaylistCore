@@ -28,5 +28,6 @@ DECLARE_CLASS_CODEGEN(PlaylistCore, Scroller, UnityEngine::MonoBehaviour,
     DECLARE_INSTANCE_FIELD(float, destinationPos);
 
     DECLARE_INSTANCE_FIELD(GlobalNamespace::IVRPlatformHelper*, platformHelper);
-    DECLARE_STATIC_FIELD(float, scrollSpeed);
+    public:
+    static float scrollSpeed;
 )
