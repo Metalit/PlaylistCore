@@ -240,7 +240,7 @@ namespace PlaylistCore {
         }
         // ensure path exists
         auto path = GetPlaylistsPath();
-        if(!std::filesystem::is_directory(path))
+        if(!std::filesystem::exists(path) || !std::filesystem::is_directory(path))
             return;
         // clear out old playlists if showDefaults is off
         if(!IsPlaylistShown("Defaults")) {
@@ -696,18 +696,19 @@ namespace PlaylistCore {
         if(!pack)
             return;
         ArrayW<GlobalNamespace::IPreviewBeatmapLevel*> levelList(pack->beatmapLevelCollection->get_beatmapLevels());
+        if(levelList.Length() == 0)
+            return;
         ArrayW<GlobalNamespace::IPreviewBeatmapLevel*> newLevels(levelList.Length() - 1);
         // remove only one level if duplicates
         bool removed = false;
-        for(int i = 0; i < levelList.Length(); i++) {
+        for(int i = 0; i < newLevels.Length(); i++) {
             // comparison should work
-            auto currentLevel = levelList[i];
-            if(removed)
-                newLevels[i - 1] = currentLevel;
-            else if(currentLevel->get_levelID() != level->get_levelID())
-                newLevels[i] = currentLevel;
-            else
+            auto currentLevel = levelList[removed ? i + 1 : i];
+            if(currentLevel->get_levelID() == level->get_levelID()) {
                 removed = true;
+                i--;
+            } else
+                newLevels[i] = currentLevel;
         }
         if(removed) {
             auto readOnlyList = (System::Collections::Generic::IReadOnlyList_1<GlobalNamespace::CustomPreviewBeatmapLevel*>*) newLevels.convert();
