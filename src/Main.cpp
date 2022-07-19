@@ -263,7 +263,7 @@ MAKE_HOOK_FIND_CLASS_INSTANCE(MainMenuModSettingsViewController_DidActivate, "Qu
             // eventListener->m_Calls->m_NeedsUpdate = true;
             button->set_onClick(UnityEngine::UI::Button::ButtonClickedEvent::New_ctor());
             button->get_onClick()->AddListener(il2cpp_utils::MakeDelegate<UnityEngine::Events::UnityAction*>((std::function<void()>) [] {
-                ReloadPlaylists(true);
+                RuntimeSongLoader::API::RefreshSongs(false);
             }));
         }
     }
@@ -426,13 +426,9 @@ extern "C" void load() {
     
     RuntimeSongLoader::API::AddRefreshLevelPacksEvent(
         [] (RuntimeSongLoader::SongLoaderBeatmapLevelPackCollectionSO* customBeatmapLevelPackCollectionSO) {
-            LoadPlaylists(customBeatmapLevelPackCollectionSO);
+            LoadPlaylists(customBeatmapLevelPackCollectionSO, true);
         }
     );
-    RuntimeSongLoader::API::AddSongDeletedEvent([] {
-        for(auto& playlist : GetLoadedPlaylists())
-            MarkPlaylistForReload(playlist);
-    });
     
     LOG_INFO("Successfully installed PlaylistCore!");
 }
