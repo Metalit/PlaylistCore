@@ -163,13 +163,15 @@ namespace PlaylistCore {
         for(const auto& file : std::filesystem::directory_iterator(path)) {
             if(!file.is_directory()) {
                 auto path = file.path();
+                std::string extension = path.extension().string();
+                LOWER(extension);
                 // check file extension
-                if(path.extension().string() == ".jpg") {
+                if(extension == ".jpg") {
                     auto newPath = path.parent_path() / (path.stem().string() + ".png");
                     std::filesystem::rename(path, newPath);
                     path = newPath;
-                } else if(path.extension().string() != ".png") {
-                    LOG_ERROR("Incompatible file extension: %s", path.extension().string().c_str());
+                } else if(extension != ".png") {
+                    LOG_ERROR("Incompatible file extension: %s", extension.c_str());
                     continue;
                 }
                 // check hash of base image before converting to sprite and to png
