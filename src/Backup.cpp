@@ -41,6 +41,11 @@ bool FixImageString(std::optional<std::string>& optional) {
     return changed;
 }
 
+bool FixupPlaylist(BPList& playlist) {
+    // only the image string can need fixing at the moment
+    return FixImageString(playlist.ImageString);
+}
+
 // returns the match of a type in a list of it, or the search object if not found
 template<class T>
 T& IdentifyMatch(T& backup, std::vector<T>& objs);
@@ -107,8 +112,6 @@ bool ProcessBackup(BPList& obj, BPList& backup) {
     }
     // restore customData if removed
     changed |= ProcessBackup(obj.CustomData, backup.CustomData);
-    // remove annoying data at the start of the image string
-    changed |= FixImageString(obj.ImageString);
     // restore image if removed
     changed |= ProcessBackup(obj.ImageString, backup.ImageString);
     return changed;
@@ -124,42 +127,41 @@ RestoreFunc GetBackupFunction() {
     }
     // whether the playlists are different from those backed up
     bool changes = false;
-    // whether changes to the playlists were made when processing the backups
-    bool changed = false;
     // get lists of names of playlist and backup files
-    std::unordered_set<std::string> playlistPaths;
-    std::unordered_set<std::string> backupPaths;
+    std::unordered_map<std::string, BPList> playlistPaths;
+    std::unordered_map<std::string, BPList> backupPaths;
     for(const auto& entry : std::filesystem::directory_iterator(GetPlaylistsPath())) {
         // trim all but file name
         std::string path(entry.path().string());
-        path = path.substr(GetPlaylistsPath().length());
-        playlistPaths.insert(path);
+        std::string pathTrimmed = path.substr(GetPlaylistsPath().length());
+        // process any necessary fixes
+        auto& json = playlistPaths.insert({pathTrimmed, BPList()}).first->second;
+        ReadFromFile(path, json);
+        if(FixupPlaylist(json))
+            WriteToFile(path, json);
     }
     for(const auto& entry : std::filesystem::directory_iterator(GetBackupsPath())) {
         // trim all but file name
         std::string path(entry.path().string());
-        path = path.substr(GetBackupsPath().length());
-        backupPaths.insert(path);
+        std::string pathTrimmed = path.substr(GetBackupsPath().length());
+        // process any necessary fixes
+        auto& json = backupPaths.insert({pathTrimmed, BPList()}).first->second;
+        ReadFromFile(path, json);
+        if(FixupPlaylist(json))
+            WriteToFile(path, json);
     }
     // get backup processors for all playlists present in both places
-    for(auto& path : backupPaths) {
-        bool inBoth = false;
-        for(auto& currentPath : playlistPaths) {
-            if(currentPath == path) {
-                inBoth = true;
-                break;
-            }
-        }
-        if(inBoth) {
+    int missing = 0;
+    for(auto& pair : backupPaths) {
+        const std::string& path = pair.first;
+        auto currentPair = playlistPaths.find(path);
+        if(currentPair != playlistPaths.end()) {
             LOG_INFO("comparing playlist %s", path.c_str());
             // load both into objects
-            static BPList currentJson;
-            ReadFromFile(GetPlaylistsPath() + path, currentJson);
-            static BPList backupJson;
-            ReadFromFile(GetBackupsPath() + path, backupJson);
+            BPList& currentJson = pair.second;
+            BPList& backupJson = currentPair->second;
             // process backup and make sure the playlist is reloaded if changed
             if(ProcessBackup(currentJson, backupJson)) {
-                changed = true;
                 WriteToFile(GetPlaylistsPath() + path, currentJson);
                 // reload playlist if already loaded
                 if(auto playlist = GetPlaylist(GetPlaylistsPath() + path)) {
@@ -169,10 +171,12 @@ RestoreFunc GetBackupFunction() {
             if(currentJson != backupJson) {
                 changes = true;
             }
-        }
+        } else
+            missing++; // keep track of number in backups not present in current
     }
+    bool pathsMatch = backupPaths.size() - missing == playlistPaths.size();
     // add function to copy all playlists from backup if there are differences
-    if(playlistPaths != backupPaths || changes) {
+    if(!pathsMatch || changes) {
         return [playlistPaths = std::move(playlistPaths), backupPaths = std::move(backupPaths)] {
             // copy and reload everything when restoring a backup
             std::filesystem::remove_all(GetPlaylistsPath());
