@@ -234,14 +234,14 @@ MAKE_HOOK_MATCH(MenuTransitionsHelper_RestartGame, &MenuTransitionsHelper::Resta
     for(auto scroller : UnityEngine::Resources::FindObjectsOfTypeAll<Scroller*>()) {
         UnityEngine::Object::Destroy(scroller);
     }
-    
-    ResettableStaticPtr::resetAll();
 
     ClearLoadedImages();
 
     hasLoaded = false;
 
     MenuTransitionsHelper_RestartGame(self, finishCallback);
+    
+    ResettableStaticPtr::resetAll();
 }
 
 // override the main menu button to reload playlists

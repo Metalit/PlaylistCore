@@ -179,7 +179,7 @@ namespace PlaylistCore {
             levelsModel->customLevelPackCollection = (IBeatmapLevelPackCollection*) BeatmapLevelPackCollection::New_ctor(packArray);
             // update in navigation controller also to avoid resetting
             auto navigationController = FindComponent<GlobalNamespace::LevelFilteringNavigationController*>();
-            if(!navigationController || !navigationController->get_isInViewControllerHierarchy())
+            if(!navigationController->get_isInViewControllerHierarchy())
                 return;
             navigationController->customLevelPacks = packArray;
             auto gameTableView = FindComponent<AnnotatedBeatmapLevelCollectionsGridView*>();
