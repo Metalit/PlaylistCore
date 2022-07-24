@@ -712,13 +712,12 @@ namespace PlaylistCore {
             } else
                 newLevels[i] = currentLevel;
         }
-        if(removed) {
-            auto readOnlyList = (System::Collections::Generic::IReadOnlyList_1<GlobalNamespace::CustomPreviewBeatmapLevel*>*) newLevels.convert();
-            ((GlobalNamespace::CustomBeatmapLevelCollection*) pack->beatmapLevelCollection)->customPreviewBeatmapLevels = readOnlyList;
-        } else {
+        if(!removed && levelList.Last()->get_levelID() != level->get_levelID()) {
             LOG_ERROR("Could not find song to be removed!");
             return;
         }
+        auto readOnlyList = (System::Collections::Generic::IReadOnlyList_1<GlobalNamespace::CustomPreviewBeatmapLevel*>*) newLevels.convert();
+        ((GlobalNamespace::CustomBeatmapLevelCollection*) pack->beatmapLevelCollection)->customPreviewBeatmapLevels = readOnlyList;
         // update json object
         auto& json = playlist->playlistJSON;
         // find song by hash (since the field is required) and remove
