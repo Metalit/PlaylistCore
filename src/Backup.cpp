@@ -1,6 +1,7 @@
 #include "Main.hpp"
 #include "PlaylistCore.hpp"
 #include "Utils.hpp"
+#include "SpriteCache.hpp"
 #include "Backup.hpp"
 #include "ResettableStaticPtr.hpp"
 
@@ -22,22 +23,22 @@ using namespace QuestUI;
 bool FixImageString(std::optional<std::string>& optional) {
     if(!optional.has_value())
         return false;
-    static std::hash<std::string> hasher;
     bool changed = false;
     // trim "data:image/png;base64,"-like metadata
-    std::string& str = optional.value();
+    std::string_view str = optional.value();
     static std::string searchString = "base64,";
-    auto searchIndex = str.find(searchString);
+    auto searchIndex = str.substr(0, 20).find(searchString);
     if(searchIndex != std::string::npos) {
         str = str.substr(searchIndex + searchString.length());
         changed |= true;
     }
+    if(HasCachedSprite(str))
+        return changed;
     // downscale image, texture should be cleaned up by unity sometime later
-    std::size_t oldHash = hasher(str);
     auto texture = UnityEngine::Texture2D::New_ctor(0, 0, UnityEngine::TextureFormat::RGBA32, false, false);
     UnityEngine::ImageConversion::LoadImage(texture, System::Convert::FromBase64String(str));
-    str = std::move(Utils::ProcessImage(texture, true));
-    changed |= hasher(str) != oldHash;
+    std::string newStr = Utils::ProcessImage(texture, true);
+    changed |= newStr != str;
     return changed;
 }
 

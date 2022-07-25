@@ -11,6 +11,7 @@
 #include <filesystem>
 #include <fstream>
 #include <thread>
+#include <map>
 
 #include "beatsaber-hook/shared/utils/il2cpp-utils.hpp"
 
@@ -33,11 +34,9 @@ using namespace PlaylistCore::Utils;
 
 namespace PlaylistCore {
     
-    std::unordered_map<std::string, Playlist*> path_playlists;
+    std::map<std::string, Playlist*> path_playlists;
     std::unordered_map<UnityEngine::Sprite*, std::string> image_paths;
 
-    std::hash<std::string> hasher;
-    std::unordered_map<std::size_t, int> imageHashes;
     // array of all loaded images
     std::vector<UnityEngine::Sprite*> loadedImages;
 
@@ -65,19 +64,19 @@ namespace PlaylistCore {
         // index is -1 with unloaded or default cover image
         auto& json = playlist->playlistJSON;
         if(json.ImageString.has_value()) {
-            std::string imageBase64 = json.ImageString.value();
+            std::string_view imageBase64 = json.ImageString.value();
             // trim "data:image/png;base64,"-like metadata
             static std::string searchString = "base64,";
-            auto searchIndex = imageBase64.find(searchString);
+            // only search first ~20 characters
+            auto searchIndex = imageBase64.substr(0, 20).find(searchString);
             if(searchIndex != std::string::npos)
                 imageBase64 = imageBase64.substr(searchIndex + searchString.length());
             // return loaded image if existing
-            std::size_t imgHash = hasher(imageBase64);
-            auto foundItr = imageHashes.find(imgHash);
-            if (foundItr != imageHashes.end()) {
-                LOG_INFO("Returning loaded image with hash %lu", imgHash);
-                playlist->imageIndex = foundItr->second;
-                return loadedImages[foundItr->second];
+            if(auto sprite = HasCachedSprite(imageBase64)) {
+                LOG_INFO("Returning loaded image");
+                int index = std::find(loadedImages.begin(), loadedImages.end(), sprite) - loadedImages.begin();
+                playlist->imageIndex = index;
+                return sprite;
             }
             // check image type
             std::string imgType = GetBase64ImageType(imageBase64);
@@ -87,31 +86,27 @@ namespace PlaylistCore {
             }
             // get and write texture
             auto texture = UnityEngine::Texture2D::New_ctor(0, 0, UnityEngine::TextureFormat::RGBA32, false, false);
-            UnityEngine::ImageConversion::LoadImage(texture, System::Convert::FromBase64String(imageBase64));
+            UnityEngine::ImageConversion::LoadImage(texture, System::Convert::FromBase64String(imageBase64)); // copy
             // process texture size and png string and check hash for changes
-            std::size_t oldHash = imgHash;
-            imageBase64 = std::move(ProcessImage(texture, true));
-            imgHash = hasher(imageBase64);
+            auto newImageBase64 = ProcessImage(texture, true); // probably most expensive idk
             // write to playlist if changed
-            if(imgHash != oldHash) {
-                json.ImageString = imageBase64;
+            if(newImageBase64 != imageBase64) {
+                json.ImageString = newImageBase64; // copy
                 playlist->Save();
             }
-            foundItr = imageHashes.find(imgHash);
-            if (foundItr != imageHashes.end()) {
-                LOG_INFO("Returning loaded image with hash %lu", imgHash);
-                playlist->imageIndex = foundItr->second;
-                return loadedImages[foundItr->second];
+            if(auto sprite = HasCachedSprite(newImageBase64)) {
+                LOG_INFO("Returning loaded image");
+                int index = std::find(loadedImages.begin(), loadedImages.end(), sprite) - loadedImages.begin();
+                playlist->imageIndex = index;
+                return sprite;
             }
-            // save image as file and return
-            LOG_INFO("Writing image with hash %lu", imgHash);
-            // reuse playlist file name
+            // save image as file with playlist file name and return
             std::string playlistPathName = std::filesystem::path(playlist->path).stem();
             std::string imgPath = GetCoversPath() + "/" + playlistPathName + ".png";
+            LOG_INFO("Writing image from playlist to %s", imgPath.c_str());
             WriteImageToFile(imgPath, texture);
-            imageHashes.insert({imgHash, loadedImages.size()});
             auto sprite = UnityEngine::Sprite::Create(texture, UnityEngine::Rect(0, 0, texture->get_width(), texture->get_height()), {0.5, 0.5}, 1024, 1, UnityEngine::SpriteMeshType::FullRect, {0, 0, 0, 0}, false);
-            CacheSprite(sprite);
+            CacheSprite(sprite, std::move(newImageBase64));
             image_paths.insert({sprite, imgPath});
             playlist->imageIndex = loadedImages.size();
             loadedImages.emplace_back(sprite);
@@ -134,19 +129,7 @@ namespace PlaylistCore {
             if(playlist->imageIndex > index)
                 playlist->imageIndex--;
         }
-        // remove from image hashes
-        std::unordered_map<std::size_t, int>::iterator removeItr;
-        for(auto itr = imageHashes.begin(); itr != imageHashes.end(); itr++) {
-            if(itr->second == index) {
-                removeItr = itr;
-            }
-            // decrement all indices later than i
-            if(itr->second > index) {
-                itr->second--;
-            }
-        }
-        // remove from maps and delete file
-        imageHashes.erase(removeItr);
+        // remove from path map and delete file
         std::filesystem::remove(pathItr->second);
         image_paths.erase(sprite);
         // remove from loaded images
@@ -156,11 +139,11 @@ namespace PlaylistCore {
 
     void LoadCoverImages() {
         // ensure path exists
-        auto path = GetCoversPath();
-        if(!std::filesystem::is_directory(path))
+        auto imagePath = GetCoversPath();
+        if(!std::filesystem::is_directory(imagePath))
             return;
         // iterate through all image files
-        for(const auto& file : std::filesystem::directory_iterator(path)) {
+        for(const auto& file : std::filesystem::directory_iterator(imagePath)) {
             if(!file.is_directory()) {
                 auto path = file.path();
                 std::string extension = path.extension().string();
@@ -180,34 +163,25 @@ namespace PlaylistCore {
                 instream.seekg(0, instream.beg);
                 auto bytes = Array<uint8_t>::NewLength(size);
                 instream.read(reinterpret_cast<char*>(bytes->values), size);
-                std::size_t imgHash = hasher(System::Convert::ToBase64String(bytes));
-                if(imageHashes.contains(imgHash)) {
-                    LOG_INFO("Skipping loading image with hash %lu", imgHash);
+                std::string imageString = System::Convert::ToBase64String(bytes);
+                if(HasCachedSprite(imageString)) {
+                    LOG_INFO("Skipping loading image %s", path.string().c_str());
                     continue;
                 }
                 // sanatize hash by converting to png
                 auto texture = UnityEngine::Texture2D::New_ctor(0, 0, UnityEngine::TextureFormat::RGBA32, false, false);
                 UnityEngine::ImageConversion::LoadImage(texture, bytes);
-                std::size_t oldHash = imgHash;
-                imgHash = hasher(ProcessImage(texture, true));
-                if(imgHash != oldHash)
+                std::string newImageString = ProcessImage(texture, true);
+                if(newImageString != imageString)
                     WriteImageToFile(path.string(), texture);
                 // check hash with loaded images
-                if(imageHashes.contains(imgHash)) {
-                    LOG_INFO("Skipping loading image with hash %lu", imgHash);
+                if(HasCachedSprite(newImageString)) {
+                    LOG_INFO("Skipping loading image %s", path.string().c_str());
                     continue;
                 }
-                LOG_INFO("Loading image with hash %lu", imgHash);
-                // rename file with hash for identification (coolImage -> coolImage_1987238271398)
-                // could be useful if images from playlist files are loaded first, but atm they are not
-                // auto searchIndex = path.stem().string().rfind("_") + 1;
-                // if(path.stem().string().substr(searchIndex) != std::to_string(imgHash)) {
-                //     LOG_INFO("Renaming image file with hash %lu", imgHash);
-                //     std::filesystem::rename(path, path.parent_path() / (path.stem().string() + "_" + std::to_string(imgHash) + ".png"));
-                // }
-                imageHashes.insert({imgHash, loadedImages.size()});
+                LOG_INFO("Loading image %s", path.string().c_str());
                 auto sprite = UnityEngine::Sprite::Create(texture, UnityEngine::Rect(0, 0, texture->get_width(), texture->get_height()), {0.5, 0.5}, 1024, 1, UnityEngine::SpriteMeshType::FullRect, {0, 0, 0, 0}, false);
-                CacheSprite(sprite);
+                CacheSprite(sprite, std::move(newImageString));
                 image_paths.insert({sprite, path});
                 loadedImages.emplace_back(sprite);
             }
@@ -221,14 +195,13 @@ namespace PlaylistCore {
     void ClearLoadedImages() {
         loadedImages.clear();
         image_paths.clear();
-        imageHashes.clear();
         ClearCachedSprites();
     }
 
     void LoadPlaylists(SongLoaderBeatmapLevelPackCollectionSO* customBeatmapLevelPackCollectionSO, bool fullReload) {
         LOG_INFO("Loading playlists");
         RemoveAllBMBFSuffixes();
-        LoadCoverImages();
+        LoadCoverImages(); // can be laggy depending on the number of images, but generally only loads a lot on launch when the screen is black anyway
         if(auto func = GetBackupFunction()) {
             LOG_INFO("Showing backup dialog");
             ShowBackupDialog(func);

@@ -64,13 +64,13 @@ namespace PlaylistCore {
             }
         }
 
-        std::string SanitizeFileName(std::string const& fileName) {
+        std::string SanitizeFileName(std::string_view fileName) {
             std::string newName;
             // yes I know not all of these are disallowed, and also that they are unlikely to end up in a name
             static const std::unordered_set<unsigned char> replacedChars = {
                 '/', '\n', '\\', '\'', '\"', ' ', '?', '<', '>', ':', '*'
             };
-            std::transform(fileName.begin(), fileName.end(), std::back_inserter(newName), [](unsigned char c){
+            std::transform(fileName.begin(), fileName.end(), std::back_inserter(newName), [](unsigned char c) {
                 if(replacedChars.contains(c))
                     return (unsigned char)('_');
                 return c;
@@ -80,7 +80,7 @@ namespace PlaylistCore {
             return newName;
         }
 
-        bool UniqueFileName(std::string const& fileName, std::string const& compareDirectory) {
+        bool UniqueFileName(std::string_view fileName, std::string_view compareDirectory) {
             if(!std::filesystem::is_directory(compareDirectory))
                 return true;
             for(auto& entry : std::filesystem::directory_iterator(compareDirectory)) {
@@ -92,24 +92,24 @@ namespace PlaylistCore {
             return true;
         }
 
-        std::string GetNewPlaylistPath(std::string const& title) {
+        std::string GetNewPlaylistPath(std::string_view title) {
             std::string fileTitle = SanitizeFileName(title);
             while(!UniqueFileName(fileTitle + ".bplist_BMBF.json", GetPlaylistsPath()))
                 fileTitle += "_";
             return GetPlaylistsPath() + "/" + fileTitle + ".bplist_BMBF.json";
         }
 
-        std::string GetPlaylistBackupPath(std::string const& path) {
+        std::string GetPlaylistBackupPath(std::string_view path) {
             if(!path.starts_with(GetPlaylistsPath()))
                 return "";
-            std::string suffix = path.substr(GetPlaylistsPath().length());
-            return GetBackupsPath() + suffix;
+            std::string_view suffix = path.substr(GetPlaylistsPath().length());
+            return GetBackupsPath() + suffix.data();
         }
 
-        std::string GetBase64ImageType(std::string const& base64) {
+        std::string GetBase64ImageType(std::string_view base64) {
             if(base64.length() < 3)
                 return "";
-            std::string sub = base64.substr(0, 3);
+            std::string_view sub = base64.substr(0, 3);
             if(sub == "iVB")
                 return ".png";
             if(sub == "/9j")
@@ -158,7 +158,7 @@ namespace PlaylistCore {
             return System::Convert::ToBase64String(bytes);
         }
 
-        void WriteImageToFile(std::string const& pathToPng, UnityEngine::Texture2D* texture) {
+        void WriteImageToFile(std::string_view pathToPng, UnityEngine::Texture2D* texture) {
             auto bytes = UnityEngine::ImageConversion::EncodeToPNG(texture);
             writefile(pathToPng, std::string((char*) bytes.begin(), bytes.Length()));
         }
