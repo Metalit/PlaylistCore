@@ -3,6 +3,8 @@
 #include "Types/Config.hpp"
 #include "ResettableStaticPtr.hpp"
 
+#include "custom-types/shared/delegate.hpp"
+
 #include "GlobalNamespace/AnnotatedBeatmapLevelCollectionsGridViewAnimator.hpp"
 #include "GlobalNamespace/VRController.hpp"
 #include "HMUI/EventSystemListener.hpp"
@@ -18,7 +20,7 @@
 
 DEFINE_TYPE(PlaylistCore, Scroller);
 
-#define ACTION_1(type, methodname) il2cpp_utils::MakeDelegate<System::Action_1<type>*>((std::function<void(type)>) [this](type arg){if(this->cachedPtr == this) methodname(arg);})
+#define ACTION_1(type, methodname) custom_types::MakeDelegate<System::Action_1<type>*>((std::function<void(type)>) [this](type arg){if(this->cachedPtr == this) methodname(arg);})
 
 using namespace PlaylistCore;
 

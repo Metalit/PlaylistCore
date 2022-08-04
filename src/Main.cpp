@@ -17,6 +17,8 @@
 
 #include "questui/shared/QuestUI.hpp"
 
+#include "custom-types/shared/delegate.hpp"
+
 #include "GlobalNamespace/StandardLevelDetailViewController.hpp"
 #include "GlobalNamespace/LevelCollectionViewController.hpp"
 #include "GlobalNamespace/LevelCollectionTableView.hpp"
@@ -262,7 +264,7 @@ MAKE_HOOK_FIND_CLASS_INSTANCE(MainMenuModSettingsViewController_DidActivate, "Qu
             // eventListener->m_Calls->m_RuntimeCalls->Clear();
             // eventListener->m_Calls->m_NeedsUpdate = true;
             button->set_onClick(UnityEngine::UI::Button::ButtonClickedEvent::New_ctor());
-            button->get_onClick()->AddListener(il2cpp_utils::MakeDelegate<UnityEngine::Events::UnityAction*>((std::function<void()>) [] {
+            button->get_onClick()->AddListener(custom_types::MakeDelegate<UnityEngine::Events::UnityAction*>((std::function<void()>) [] {
                 RuntimeSongLoader::API::RefreshSongs(false);
             }));
         }
@@ -305,7 +307,7 @@ MAKE_HOOK_FIND_CLASS_INSTANCE(DownloadSongsSearchViewController_DidActivate, "So
         // get entry at index with some lovely pointer addition
         SearchEntryHack* entryArrStart = (SearchEntryHack*) (((char*) self) + sizeof(HMUI::ViewController));
         // capture button array start and index
-        downloadButton->get_onClick()->AddListener(il2cpp_utils::MakeDelegate<Events::UnityAction*>((std::function<void()>) [entryArrStart, i] {
+        downloadButton->get_onClick()->AddListener(custom_types::MakeDelegate<Events::UnityAction*>((std::function<void()>) [entryArrStart, i] {
             auto& entry = *(entryArrStart + i + 1);
             // get hash from entry
             std::string hash;

@@ -36,7 +36,11 @@ bool FixImageString(std::optional<std::string>& optional) {
         return changed;
     // downscale image, texture should be cleaned up by unity sometime later
     auto texture = UnityEngine::Texture2D::New_ctor(0, 0, UnityEngine::TextureFormat::RGBA32, false, false);
-    UnityEngine::ImageConversion::LoadImage(texture, System::Convert::FromBase64String(str));
+    try {
+        UnityEngine::ImageConversion::LoadImage(texture, System::Convert::FromBase64String(str));
+    } catch (std::exception const& exc) {
+        return changed;
+    }
     std::string newStr = Utils::ProcessImage(texture, true);
     changed |= newStr != str;
     return changed;
@@ -44,6 +48,7 @@ bool FixImageString(std::optional<std::string>& optional) {
 
 bool FixupPlaylist(BPList& playlist) {
     // only the image string can need fixing at the moment
+    LOG_INFO("Fixing image string for playlist %s", playlist.PlaylistTitle.c_str());
     return FixImageString(playlist.ImageString);
 }
 

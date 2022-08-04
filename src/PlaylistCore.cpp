@@ -86,7 +86,12 @@ namespace PlaylistCore {
             }
             // get and write texture
             auto texture = UnityEngine::Texture2D::New_ctor(0, 0, UnityEngine::TextureFormat::RGBA32, false, false);
-            UnityEngine::ImageConversion::LoadImage(texture, System::Convert::FromBase64String(imageBase64)); // copy
+            LOG_INFO("Loading image of playlist %s", playlist->name.c_str());
+            try {
+                UnityEngine::ImageConversion::LoadImage(texture, System::Convert::FromBase64String(imageBase64)); // copy
+            } catch (std::exception const& exc) {
+                return GetDefaultCoverImage();
+            }
             // process texture size and png string and check hash for changes
             auto newImageBase64 = ProcessImage(texture, true); // probably most expensive idk
             // write to playlist if changed
