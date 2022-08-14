@@ -68,7 +68,7 @@ namespace PlaylistCore {
             // trim "data:image/png;base64,"-like metadata
             static std::string searchString = "base64,";
             // only search first ~20 characters
-            auto searchIndex = imageBase64.substr(0, 20).find(searchString);
+            auto searchIndex = imageBase64.substr(0, 40).find(searchString);
             if(searchIndex != std::string::npos)
                 imageBase64 = imageBase64.substr(searchIndex + searchString.length());
             // return loaded image if existing
@@ -90,6 +90,7 @@ namespace PlaylistCore {
             try {
                 UnityEngine::ImageConversion::LoadImage(texture, System::Convert::FromBase64String(imageBase64)); // copy
             } catch (std::exception const& exc) {
+                LOG_DEBUG("Error loading image: %s", exc.what());
                 return GetDefaultCoverImage();
             }
             // process texture size and png string and check hash for changes
@@ -175,7 +176,12 @@ namespace PlaylistCore {
                 }
                 // sanatize hash by converting to png
                 auto texture = UnityEngine::Texture2D::New_ctor(0, 0, UnityEngine::TextureFormat::RGBA32, false, false);
-                UnityEngine::ImageConversion::LoadImage(texture, bytes);
+                try {
+                    UnityEngine::ImageConversion::LoadImage(texture, bytes);
+                } catch (std::exception const& exc) {
+                    LOG_DEBUG("Error loading image: %s", exc.what());
+                    continue;
+                }
                 std::string newImageString = ProcessImage(texture, true);
                 if(newImageString != imageString)
                     WriteImageToFile(path.string(), texture);

@@ -108,7 +108,7 @@ namespace PlaylistCore {
 
         std::string GetBase64ImageType(std::string_view base64) {
             if(base64.length() < 3)
-                return "";
+                return "unknown";
             std::string_view sub = base64.substr(0, 3);
             if(sub == "iVB")
                 return ".png";
@@ -118,7 +118,7 @@ namespace PlaylistCore {
                 return ".gif";
             if(sub == "Qk1")
                 return ".bmp";
-            return "";
+            return "unknown";
         }
 
         std::string ProcessImage(UnityEngine::Texture2D* texture, bool returnPngString) {

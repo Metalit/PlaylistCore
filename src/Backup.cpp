@@ -39,6 +39,7 @@ bool FixImageString(std::optional<std::string>& optional) {
     try {
         UnityEngine::ImageConversion::LoadImage(texture, System::Convert::FromBase64String(str));
     } catch (std::exception const& exc) {
+        LOG_DEBUG("Error loading image: %s", exc.what());
         return changed;
     }
     std::string newStr = Utils::ProcessImage(texture, true);
@@ -46,10 +47,30 @@ bool FixImageString(std::optional<std::string>& optional) {
     return changed;
 }
 
+bool LowerSongHashes(std::vector<PlaylistCore::BPSong>& songs) {
+    bool changed = false;
+    for(auto& song : songs) {
+        std::string oldHash = song.Hash;
+        LOWER(song.Hash);
+        if(song.Hash != oldHash)
+            changed = true;
+    }
+    return changed;
+}
+
 bool FixupPlaylist(BPList& playlist) {
-    // only the image string can need fixing at the moment
-    LOG_INFO("Fixing image string for playlist %s", playlist.PlaylistTitle.c_str());
-    return FixImageString(playlist.ImageString);
+    bool changed = false;
+    // having bad image strings in backups can cause bad behavior
+    if(FixImageString(playlist.ImageString)) {
+        LOG_DEBUG("Fixing image string for playlist %s", playlist.PlaylistTitle.c_str());
+        changed = true;
+    }
+    // you can't trust the case of these things
+    if(LowerSongHashes(playlist.Songs)) {
+        LOG_DEBUG("Fixing song hash case for playlist %s", playlist.PlaylistTitle.c_str());
+        changed = true;
+    }
+    return changed;
 }
 
 // returns the match of a type in a list of it, or the search object if not found
@@ -57,9 +78,9 @@ template<class T>
 T& IdentifyMatch(T& backup, std::vector<T>& objs);
 
 BPSong& IdentifyMatch(BPSong& backup, std::vector<BPSong>& objs) {
-    std::transform(backup.Hash.begin(), backup.Hash.end(), backup.Hash.begin(), toupper);
+    // LOWER(backup.Hash); // should be lowered by FixupPlaylist
     for(auto& obj : objs) {
-        std::transform(obj.Hash.begin(), obj.Hash.end(), obj.Hash.begin(), toupper);
+        // LOWER(obj.Hash);
         if(obj.Hash == backup.Hash)
             return obj;
     }
@@ -89,7 +110,10 @@ template<>
 bool ProcessBackup(BPSong& obj, BPSong& backup) {
     bool changed = false;
     // restore difficulties if removed
-    changed |= ProcessBackup(obj.Difficulties, backup.Difficulties);
+    if(ProcessBackup(obj.Difficulties, backup.Difficulties)) {
+        changed = true;
+        LOG_DEBUG("difficulties were restored from backup");
+    }
     return changed;
 }
 
@@ -97,7 +121,10 @@ template<>
 bool ProcessBackup(CustomData& obj, CustomData& backup) {
     bool changed = false;
     // restore sync url if removed
-    changed |= ProcessBackup(obj.SyncURL, backup.SyncURL);
+    if(ProcessBackup(obj.SyncURL, backup.SyncURL)) {
+        changed = true;
+        LOG_DEBUG("sync url was restored from backup");
+    }
     return changed;
 }
 
@@ -105,21 +132,36 @@ template<>
 bool ProcessBackup(BPList& obj, BPList& backup) {
     bool changed = false;
     // restore author if removed
-    changed |= ProcessBackup(obj.PlaylistAuthor, backup.PlaylistAuthor);
+    if(ProcessBackup(obj.PlaylistAuthor, backup.PlaylistAuthor)) {
+        changed = true;
+        LOG_DEBUG("author was restored from backup");
+    }
     // restore description if removed
-    changed |= ProcessBackup(obj.PlaylistDescription, backup.PlaylistDescription);
+    if(ProcessBackup(obj.PlaylistDescription, backup.PlaylistDescription)) {
+        changed = true;
+        LOG_DEBUG("description was restored from backup");
+    }
     // do backup restoration for all preserved songs
     if(obj.Songs != backup.Songs) {
         for(auto& song : obj.Songs) {
             auto& songBackup = IdentifyMatch(song, backup.Songs);
             // backup processor for two of the same object should be nothing
-            changed |= ProcessBackup(song, songBackup);
+            if(ProcessBackup(song, songBackup)) {
+                changed = true;
+                // LOG_DEBUG("song data was restored from backup");
+            }
         }
     }
     // restore customData if removed
-    changed |= ProcessBackup(obj.CustomData, backup.CustomData);
+    if(ProcessBackup(obj.CustomData, backup.CustomData)) {
+        changed = true;
+        LOG_DEBUG("custom data was restored from backup");
+    }
     // restore image if removed
-    changed |= ProcessBackup(obj.ImageString, backup.ImageString);
+    if(ProcessBackup(obj.ImageString, backup.ImageString)) {
+        changed = true;
+        LOG_DEBUG("image was restored from backup");
+    }
     return changed;
 }
 
@@ -142,7 +184,12 @@ RestoreFunc GetBackupFunction() {
         std::string pathTrimmed = path.substr(GetPlaylistsPath().length());
         // process any necessary fixes
         auto& json = playlistPaths.insert({pathTrimmed, BPList()}).first->second;
-        ReadFromFile(path, json);
+        try {
+            ReadFromFile(path, json);
+        } catch(const std::exception& err) {
+            LOG_ERROR("Error loading playlist %s: %s", path.c_str(), err.what());
+            continue;
+        }
         if(FixupPlaylist(json))
             WriteToFile(path, json);
     }
@@ -152,7 +199,12 @@ RestoreFunc GetBackupFunction() {
         std::string pathTrimmed = path.substr(GetBackupsPath().length());
         // process any necessary fixes
         auto& json = backupPaths.insert({pathTrimmed, BPList()}).first->second;
-        ReadFromFile(path, json);
+        try {
+            ReadFromFile(path, json);
+        } catch(const std::exception& err) {
+            LOG_ERROR("Error loading playlist %s: %s", path.c_str(), err.what());
+            continue;
+        }
         if(FixupPlaylist(json))
             WriteToFile(path, json);
     }
@@ -162,12 +214,13 @@ RestoreFunc GetBackupFunction() {
         const std::string& path = pair.first;
         auto currentPair = playlistPaths.find(path);
         if(currentPair != playlistPaths.end()) {
-            LOG_INFO("comparing playlist %s", path.c_str());
+            LOG_DEBUG("comparing playlist %s", path.c_str());
             // load both into objects
-            BPList& currentJson = pair.second;
-            BPList& backupJson = currentPair->second;
+            BPList& backupJson = pair.second;
+            BPList& currentJson = currentPair->second;
             // process backup and make sure the playlist is reloaded if changed
             if(ProcessBackup(currentJson, backupJson)) {
+                // LOG_DEBUG("playlist info restored from backup");
                 WriteToFile(GetPlaylistsPath() + path, currentJson);
                 // reload playlist if already loaded
                 if(auto playlist = GetPlaylist(GetPlaylistsPath() + path)) {
@@ -175,6 +228,7 @@ RestoreFunc GetBackupFunction() {
                 }
             }
             if(currentJson != backupJson) {
+                LOG_DEBUG("playlists were different");
                 changes = true;
             }
         } else
