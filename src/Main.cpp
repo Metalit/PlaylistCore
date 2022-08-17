@@ -351,15 +351,16 @@ MAKE_HOOK_MATCH(LevelCollectionNavigationController_DidActivate, &LevelCollectio
         COMBINE(self->levelDetailViewController->levelFavoriteStatusDidChangeEvent, HandleLevelDetailViewControllerLevelFavoriteStatusDidChange, System::Action_2<StandardLevelDetailViewController*, bool>*);
         if (self->beatmapLevelToBeSelectedAfterPresent) {
             self->levelCollectionViewController->SelectLevel(self->beatmapLevelToBeSelectedAfterPresent);
-            self->PresentViewControllersForLevelCollection();
+            auto arr = ArrayW<HMUI::ViewController*>(il2cpp_array_size_t(1));
+            arr[0] = self->levelCollectionViewController;
+            self->SetChildViewControllers(arr);
             self->beatmapLevelToBeSelectedAfterPresent = nullptr;
         }
         else {
+            ArrayW<HMUI::ViewController*> childVCs = ArrayW<HMUI::ViewController*>(il2cpp_array_size_t(1));
             // override here so that the pack detail controller will not be shown if no pack is selected
-            if(self->levelPack)
-                self->PresentViewControllersForPack();
-            else
-                self->PresentViewControllersForLevelCollection();
+            childVCs[0] = self->levelPack ? self->levelPackDetailViewController : childVCs[0] = self->levelCollectionViewController;
+            self->SetChildViewControllers(childVCs);
         }
     } else if(self->loading) {
         self->ClearChildViewControllers();
