@@ -208,16 +208,16 @@ RestoreFunc GetBackupFunction() {
         if(FixupPlaylist(json))
             WriteToFile(path, json);
     }
-    // get backup processors for all playlists present in both places
+    // process backups for all playlists present in both places
     int missing = 0;
-    for(auto& pair : backupPaths) {
+    for(auto& pair : playlistPaths) {
         const std::string& path = pair.first;
-        auto currentPair = playlistPaths.find(path);
-        if(currentPair != playlistPaths.end()) {
+        auto currentPair = backupPaths.find(path);
+        if(currentPair != backupPaths.end()) {
             LOG_DEBUG("comparing playlist %s", path.c_str());
             // load both into objects
-            BPList& backupJson = pair.second;
-            BPList& currentJson = currentPair->second;
+            BPList& currentJson = pair.second;
+            BPList& backupJson = currentPair->second;
             // process backup and make sure the playlist is reloaded if changed
             if(ProcessBackup(currentJson, backupJson)) {
                 // LOG_DEBUG("playlist info restored from backup");
@@ -232,9 +232,10 @@ RestoreFunc GetBackupFunction() {
                 changes = true;
             }
         } else
-            missing++; // keep track of number in backups not present in current
+            missing++;
     }
-    bool pathsMatch = backupPaths.size() - missing == playlistPaths.size();
+    // fine if only playlists were added and nothing else changed
+    bool pathsMatch = playlistPaths.size() - missing == backupPaths.size();
     // add function to copy all playlists from backup if there are differences
     if(!pathsMatch || changes) {
         return [playlistPaths = std::move(playlistPaths), backupPaths = std::move(backupPaths)] {
