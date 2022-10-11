@@ -62,6 +62,11 @@
       "id": "rapidjson-macros",
       "versionRange": "^0.2.3",
       "additionalData": {}
+    },
+    {
+      "id": "bsml",
+      "versionRange": "^0.2.0",
+      "additionalData": {}
     }
   ],
   "additionalData": {}

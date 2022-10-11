@@ -16,6 +16,7 @@
 #include "songloader/shared/API.hpp"
 
 #include "questui/shared/QuestUI.hpp"
+#include "bsml/shared/BSML.hpp"
 
 #include "custom-types/shared/delegate.hpp"
 
@@ -246,31 +247,6 @@ MAKE_HOOK_MATCH(MenuTransitionsHelper_RestartGame, &MenuTransitionsHelper::Resta
     ResettableStaticPtr::resetAll();
 }
 
-// override the main menu button to reload playlists
-MAKE_HOOK_FIND_CLASS_INSTANCE(MainMenuModSettingsViewController_DidActivate, "QuestUI", "MainMenuModSettingsViewController", "DidActivate",
-        void, HMUI::ViewController* self, bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
-    
-    MainMenuModSettingsViewController_DidActivate(self, firstActivation, addedToHierarchy, screenSystemEnabling);
-
-    if(!firstActivation)
-        return;
-
-    for(auto& button : self->GetComponentsInChildren<UnityEngine::UI::Button*>()) {
-        auto text = button->GetComponentInChildren<TMPro::TextMeshProUGUI*>();
-        if(text->get_text() == "Reload Playlists") {
-            // auto eventListener = button->get_onClick();
-            // not sure why RemoveAllListeners is stripped, but this is what it does
-            // actually the m_RuntimeCalls list has a problem with its generic so I guess we just make a new event
-            // eventListener->m_Calls->m_RuntimeCalls->Clear();
-            // eventListener->m_Calls->m_NeedsUpdate = true;
-            button->set_onClick(UnityEngine::UI::Button::ButtonClickedEvent::New_ctor());
-            button->get_onClick()->AddListener(custom_types::MakeDelegate<UnityEngine::Events::UnityAction*>((std::function<void()>) [] {
-                RuntimeSongLoader::API::RefreshSongs(false);
-            }));
-        }
-    }
-}
-
 // add our playlist selection view controller to the song downloader menu
 MAKE_HOOK_FIND_CLASS_INSTANCE(DownloadSongsFlowCoordinator_DidActivate, "SongDownloader", "DownloadSongsFlowCoordinator", "DidActivate",
         void, HMUI::FlowCoordinator* self, bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
@@ -410,11 +386,9 @@ extern "C" void load() {
     il2cpp_functions::Init();
     QuestUI::Init();
     QuestUI::Register::RegisterModSettingsViewController<SettingsViewController*>(modInfo, "Playlist Core");
-    // create fake modInfo for reload playlists button
-    ModInfo fakeModInfo;
-    fakeModInfo.id = "Reload Playlists";
-    QuestUI::Register::RegisterMainMenuModSettingsViewController(fakeModInfo);
-
+    
+    BSML::Init();
+    BSML::Register::RegisterMenuButton("Reload Playlists", "Reloads all playlists!", []{ RuntimeSongLoader::API::RefreshSongs(false); });
     hasManager = Modloader::requireMod("PlaylistManager");
 
     INSTALL_HOOK_ORIG(getLogger(), TableView_GetVisibleCellsIdRange);
@@ -424,7 +398,6 @@ extern "C" void load() {
     INSTALL_HOOK(getLogger(), AnnotatedBeatmapLevelCollectionsGridViewAnimator_ScrollToRowIdxInstant);
     INSTALL_HOOK(getLogger(), AnnotatedBeatmapLevelCollectionCell_RefreshAvailabilityAsync);
     INSTALL_HOOK(getLogger(), MenuTransitionsHelper_RestartGame);
-    INSTALL_HOOK(getLogger(), MainMenuModSettingsViewController_DidActivate);
     INSTALL_HOOK(getLogger(), DownloadSongsFlowCoordinator_DidActivate);
     INSTALL_HOOK(getLogger(), DownloadSongsSearchViewController_DidActivate);
     INSTALL_HOOK_ORIG(getLogger(), LevelCollectionNavigationController_DidActivate);
