@@ -41,8 +41,11 @@ void RemoveCachedSprite(Sprite* sprite) {
 }
 
 void ClearCachedSprites() {
-    for(auto& pair : caches)
-        Object::Destroy(pair.second);
+    for(auto& pair : caches) {
+        if (pair.second && pair.second->m_CachedPtr.m_value) {
+            Object::Destroy(pair.second);
+        }
+    }
     caches.clear();
     strings.clear();
 }
