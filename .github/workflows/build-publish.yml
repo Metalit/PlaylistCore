@@ -47,7 +47,7 @@ jobs:
           cache: true
 
           publish: ${{ github.event_name != 'pull_request' && steps.commit-regex.outputs.match != '' }} # Will publish the package at the end of the action run
-          publish_token: ${{ secrets.QPM_TOKEN }} # Token required for authorization publish to qpackages.com
+          publish_token: ${{ secrets.QPM_KEY }} # Token required for authorization publish to qpackages.com
           version: "${{ steps.commit-regex.outputs.group3 }}" # defaults to qpm-rust version, do not include v
 
           # set to true if applicable, ASSUMES the file is already a release asset
@@ -101,11 +101,11 @@ jobs:
         uses: softprops/action-gh-release@v0.1.12
         if: github.event_name != 'pull_request' && steps.commit-regex.outputs.match != ''
         with:
-          name: Release for ${{ steps.commit-regex.outputs.group4 }}
+          name: ${{ steps.commit-regex.outputs.group4 }}
           tag_name: ${{ steps.commit-regex.outputs.group1 }}
           files: |
             ./build/${{ steps.libname.outputs.NAME }}
             ./build/debug/debug_${{ steps.libname.outputs.NAME }}
-            ./${{env.qmodName}}.qmod
+            ./${{ env.qmodName }}.qmod
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
