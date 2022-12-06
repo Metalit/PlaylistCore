@@ -28,9 +28,9 @@
 #include <filesystem>
 
 namespace PlaylistCore {
-    
+
     namespace Utils {
-        
+
         // desired image size
         const int imageSize = 512;
 
@@ -137,7 +137,7 @@ namespace PlaylistCore {
 
                     int old_texture_y = floor(y * ratio_y);
                     int old_texture_offset_from_y = old_texture_y * width;
-                    
+
                     for(int x = 0; x < imageSize; x++) {
                         int old_texture_x = floor(x * ratio_x);
 
@@ -211,7 +211,7 @@ namespace PlaylistCore {
                     newAllPacks[i + arr1.Length() + arr2.Length()] = packArray[i];
                 navigationController->allBeatmapLevelPacks = newAllPacks;
                 // update the levels shown in the search view controller
-                navigationController->levelSearchViewController->Setup(newAllPacks);
+                navigationController->levelSearchViewController->Setup(newAllPacks, false);
                 // only invoke callbacks in custom songs view
                 if(navigationController->selectLevelCategoryViewController->get_selectedLevelCategory() == SelectLevelCategoryViewController::LevelCategory::CustomSongs) {
                     auto selectionCoordinator = FindComponent<LevelSelectionFlowCoordinator*>();
