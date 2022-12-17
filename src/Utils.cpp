@@ -211,7 +211,7 @@ namespace PlaylistCore {
                     newAllPacks[i + arr1.Length() + arr2.Length()] = packArray[i];
                 navigationController->allBeatmapLevelPacks = newAllPacks;
                 // update the levels shown in the search view controller
-                navigationController->levelSearchViewController->Setup(newAllPacks, false);
+                navigationController->levelSearchViewController->Setup(newAllPacks);
                 // only invoke callbacks in custom songs view
                 if(navigationController->selectLevelCategoryViewController->get_selectedLevelCategory() == SelectLevelCategoryViewController::LevelCategory::CustomSongs) {
                     auto selectionCoordinator = FindComponent<LevelSelectionFlowCoordinator*>();
