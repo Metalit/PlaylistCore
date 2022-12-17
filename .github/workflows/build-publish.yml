@@ -46,16 +46,7 @@ jobs:
           restore: true
           cache: true
 
-          publish: ${{ github.event_name != 'pull_request' && steps.commit-regex.outputs.match != '' }} # Will publish the package at the end of the action run
-          publish_token: ${{ secrets.QPM_KEY }} # Token required for authorization publish to qpackages.com
-          version: "${{ steps.commit-regex.outputs.group3 }}" # defaults to qpm-rust version, do not include v
-
-          # set to true if applicable, ASSUMES the file is already a release asset
-          qpm_release_bin: true
-          qpm_debug_bin: false
-
-          # Name of qmod in release asset. Assumes exists, same as prior
-          qpm_qmod: ${{ env.qmodName }}.qmod
+          publish: false
 
       - name: List Post Restore
         run: |
@@ -109,3 +100,21 @@ jobs:
             ./${{ env.qmodName }}.qmod
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: QPM Publish
+        uses: Fernthedev/qpm-rust-action@main
+        with:
+          workflow_token: ${{ secrets.GITHUB_TOKEN }}
+
+          restore: false
+
+          eager_publish: ${{ github.event_name != 'pull_request' && steps.commit-regex.outputs.match != '' }} # Will publish the package
+          publish_token: ${{ secrets.QPM_KEY }} # Token required for authorization publish to qpackages.com
+          version: "${{ steps.commit-regex.outputs.group3 }}" # defaults to qpm-rust version, do not include v
+
+          # set to true if applicable, ASSUMES the file is already a release asset
+          qpm_release_bin: true
+          qpm_debug_bin: false
+
+          # Name of qmod in release asset. Assumes exists, same as prior
+          qpm_qmod: ${{ env.qmodName }}.qmod
