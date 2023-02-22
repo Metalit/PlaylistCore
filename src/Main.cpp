@@ -104,31 +104,7 @@ void SaveConfig() {
         LOG_ERROR("Error saving config!");
 }
 
-using TupleType = System::Tuple_2<int, int>; // commas in macros moment
-// small fix(es) for horizontal tables
-MAKE_HOOK_MATCH(TableView_GetVisibleCellsIdRange, &HMUI::TableView::GetVisibleCellsIdRange,
-        TupleType*, HMUI::TableView* self) {
-
-    auto rect = self->viewportTransform->get_rect();
-
-    float viewSize = (self->tableType == HMUI::TableView::TableType::Vertical) ? rect.get_height() : rect.get_width();
-    float position = (self->tableType == HMUI::TableView::TableType::Vertical) ? self->scrollView->get_position() : -self->scrollView->get_position();
-
-    int min = floor(position / self->cellSize + 0.001);
-    if (min < 0) {
-        min = 0;
-    }
-
-    int max = floor((position + viewSize - self->cellSize * 0.001) / self->cellSize);
-    if (max > self->numberOfCells - 1) {
-        max = self->numberOfCells - 1;
-    }
-
-    LOG_DEBUG("Table: %s from %s from %s from %s", self->get_name().operator std::string().c_str(), self->get_transform()->GetParent()->get_name().operator std::string().c_str(), self->get_transform()->GetParent()->GetParent()->get_name().operator std::string().c_str(), self->get_transform()->GetParent()->GetParent()->GetParent()->get_name().operator std::string().c_str());
-    LOG_DEBUG("GetVisibleCellsIdRange ret %i, %i", min, max);
-
-    return TupleType::New_ctor(min, max);
-}
+// small fix for horizontal tables
 MAKE_HOOK_MATCH(TableView_ReloadDataKeepingPosition, &HMUI::TableView::ReloadDataKeepingPosition,
         void, HMUI::TableView* self) {
 
@@ -136,7 +112,7 @@ MAKE_HOOK_MATCH(TableView_ReloadDataKeepingPosition, &HMUI::TableView::ReloadDat
 
     auto rect = self->viewportTransform->get_rect();
     float viewSize = (self->tableType == HMUI::TableView::TableType::Vertical) ? rect.get_height() : rect.get_width();
-    float position = (self->tableType == HMUI::TableView::TableType::Vertical) ? self->scrollView->get_position() : -self->scrollView->get_position();
+    float position = self->scrollView->get_position();
 
     self->scrollView->ScrollTo(std::min(position, std::max(self->cellSize * self->numberOfCells - viewSize, 0.0f)), false);
 }
@@ -404,7 +380,6 @@ extern "C" void load() {
     BSML::Register::RegisterMenuButton("Reload Playlists", "Reloads all playlists!", []{ RuntimeSongLoader::API::RefreshSongs(false); });
     hasManager = Modloader::requireMod("PlaylistManager");
 
-    INSTALL_HOOK_ORIG(getLogger(), TableView_GetVisibleCellsIdRange);
     INSTALL_HOOK_ORIG(getLogger(), TableView_ReloadDataKeepingPosition);
     INSTALL_HOOK_ORIG(getLogger(), LevelCollectionViewController_SetData);
     INSTALL_HOOK(getLogger(), AnnotatedBeatmapLevelCollectionsGridView_OnEnable);
