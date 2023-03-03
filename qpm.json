@@ -22,7 +22,7 @@
     },
     {
       "id": "codegen",
-      "versionRange": "^0.32.0",
+      "versionRange": "^0.33.0",
       "additionalData": {}
     },
     {
@@ -65,7 +65,7 @@
     },
     {
       "id": "bsml",
-      "versionRange": "^0.2.6",
+      "versionRange": "^0.3.0",
       "additionalData": {
         "private": true
       }
