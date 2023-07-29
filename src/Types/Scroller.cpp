@@ -25,11 +25,6 @@ DEFINE_TYPE(PlaylistCore, Scroller);
 using namespace PlaylistCore;
 
 float fixedCellHeight = 15;
-float Scroller::scrollSpeed;
-
-void UpdateScrollSpeed() {
-    Scroller::scrollSpeed = 45 * playlistConfig.ScrollSpeed;
-}
 
 void Scroller::Awake() {
     platformHelper = FindComponent<GlobalNamespace::VRController*>()->vrPlatformHelper;
@@ -64,7 +59,6 @@ void Scroller::OnDestroy() {
 void Scroller::Init(UnityEngine::RectTransform* content) {
     content->set_anchoredPosition({0, content->get_anchoredPosition().y});
     contentTransform = content;
-    UpdateScrollSpeed();
     cachedPtr = this;
 }
 
@@ -87,7 +81,7 @@ void Scroller::HandleJoystickWasNotCenteredThisFrame(UnityEngine::Vector2 deltaP
     if(!pointerHovered)
         return;
     float num = destinationPos;
-    num -= deltaPos.y * UnityEngine::Time::get_deltaTime() * Scroller::scrollSpeed;
+    num -= deltaPos.y * UnityEngine::Time::get_deltaTime() * 45 * getConfig().ScrollSpeed.GetValue();
     SetDestinationPos(num);
 }
 

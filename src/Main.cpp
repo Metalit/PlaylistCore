@@ -71,7 +71,6 @@ using namespace PlaylistCore;
 ModInfo modInfo;
 ModInfo managerModInfo;
 
-PlaylistConfig playlistConfig;
 bool hasManager;
 
 Logger& getLogger() {
@@ -89,19 +88,9 @@ std::string GetBackupsPath() {
     return backupsPath;
 }
 
-std::string GetConfigPath() {
-    static std::string configPath = Configuration::getConfigFilePath(modInfo);
-    return configPath;
-}
-
 std::string GetCoversPath() {
     static std::string coversPath(getDataDir(managerModInfo) + "Covers");
     return coversPath;
-}
-
-void SaveConfig() {
-    if(!WriteToFile(GetConfigPath(), playlistConfig))
-        LOG_ERROR("Error saving config!");
 }
 
 // small fix for horizontal tables
@@ -358,16 +347,8 @@ extern "C" void setup(ModInfo& info) {
     auto coversPath = GetCoversPath();
     if(!direxists(coversPath))
         mkpath(coversPath);
-    
-    auto configPath = GetConfigPath();
-    if(fileexists(configPath)) {
-        try {
-            ReadFromFile(configPath, playlistConfig);
-        } catch (const std::exception& err) {
-            LOG_ERROR("Error reading playlist config: %s", err.what());
-        }
-    }
-    SaveConfig();
+
+    getConfig().Init(modInfo);
 }
 
 extern "C" void load() {

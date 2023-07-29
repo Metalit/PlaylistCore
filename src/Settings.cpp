@@ -21,7 +21,7 @@ using namespace QuestUI;
 using namespace PlaylistCore;
 
 void SettingsViewController::DidActivate(bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
-    
+
     using Vec = UnityEngine::Vector2;
 
     if(!firstActivation)
@@ -31,7 +31,7 @@ void SettingsViewController::DidActivate(bool firstActivation, bool addedToHiera
 
     auto container = BeatSaberUI::CreateScrollableSettingsContainer(this);
     auto parent = container->get_transform();
-    
+
     auto horizontal = BeatSaberUI::CreateHorizontalLayoutGroup(parent);
     horizontal->set_childControlWidth(false);
     horizontal->set_childAlignment(UnityEngine::TextAnchor::MiddleCenter);
@@ -48,10 +48,5 @@ void SettingsViewController::DidActivate(bool firstActivation, bool addedToHiera
     });
     BeatSaberUI::AddHoverHint(reloadAllButton, "Reloads all playlists from the playlist folder");
 
-    auto scrollSpeedSlider = BeatSaberUI::CreateSliderSetting(parent, "Playlist Scroll Speed", 0.5, playlistConfig.ScrollSpeed, 0.5, 10, 0.1, [](float value) {
-        playlistConfig.ScrollSpeed = value;
-        SaveConfig();
-        UpdateScrollSpeed();
-    });
-    BeatSaberUI::AddHoverHint(scrollSpeedSlider, "The speed at which to scroll through the playlists with the joystick.");
+    AddConfigValueSlider(parent, getConfig().ScrollSpeed, 1, 0.1, 0.1, 10);
 }

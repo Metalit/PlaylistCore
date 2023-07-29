@@ -247,10 +247,11 @@ namespace PlaylistCore {
         }
         // create set of playlists that aren't found when loading
         std::unordered_set<std::string> removedPaths{};
-        for(auto& path : playlistConfig.Order)
+        auto orderVec = getConfig().Order.GetValue();
+        for(auto& path : orderVec)
             removedPaths.insert(path);
         // create array for playlists
-        std::vector<GlobalNamespace::CustomBeatmapLevelPack*> sortedPlaylists(playlistConfig.Order.size());
+        std::vector<GlobalNamespace::CustomBeatmapLevelPack*> sortedPlaylists(orderVec.size());
         // iterate through all playlist files
         for(const auto& entry : std::filesystem::directory_iterator(path)) {
             if(!entry.is_directory()) {
@@ -346,9 +347,9 @@ namespace PlaylistCore {
         }
         // remove paths in order config that were not loaded
         for(auto& path : removedPaths) {
-            for(auto iter = playlistConfig.Order.begin(); iter != playlistConfig.Order.end(); iter++) {
+            for(auto iter = orderVec.begin(); iter != orderVec.end(); iter++) {
                 if(*iter == path) {
-                    playlistConfig.Order.erase(iter);
+                    orderVec.erase(iter);
                     iter--;
                 }
             }
@@ -359,14 +360,14 @@ namespace PlaylistCore {
                 path_playlists.erase(pathItr);
             }
         }
-        SaveConfig();
+        getConfig().Order.SetValue(orderVec);
         hasLoaded = true;
         LOG_INFO("Playlists loaded");
     }
 
     std::vector<Playlist*> GetLoadedPlaylists() {
         // create return vector with base size
-        std::vector<Playlist*> playlistArray(playlistConfig.Order.size());
+        std::vector<Playlist*> playlistArray(getConfig().Order.GetValue().size());
         for(auto& pair : path_playlists) {
             auto& playlist = pair.second;
             int idx = GetPlaylistIndex(playlist->path);
@@ -400,14 +401,15 @@ namespace PlaylistCore {
     }
 
     int GetPlaylistIndex(std::string const& path) {
+        auto orderVec = getConfig().Order.GetValue();
         // find index of playlist title in config
-        for(int i = 0; i < playlistConfig.Order.size(); i++) {
-            if(playlistConfig.Order[i] == path)
+        for(int i = 0; i < orderVec.size(); i++) {
+            if(orderVec[i] == path)
                 return i;
         }
         // add to end of config if not found
-        playlistConfig.Order.push_back(path);
-        SaveConfig();
+        orderVec.push_back(path);
+        getConfig().Order.SetValue(orderVec);
         return -1;
     }
 
@@ -455,9 +457,10 @@ namespace PlaylistCore {
             LOG_ERROR("Attempting to move unloaded playlist");
             return;
         }
-        playlistConfig.Order.erase(playlistConfig.Order.begin() + originalIndex);
-        playlistConfig.Order.insert(playlistConfig.Order.begin() + index, playlist->path);
-        SaveConfig();
+        auto orderVec = getConfig().Order.GetValue();
+        orderVec.erase(orderVec.begin() + originalIndex);
+        orderVec.insert(orderVec.begin() + index, playlist->path);
+        getConfig().Order.SetValue(orderVec);
     }
 
     void RenamePlaylist(Playlist* playlist, std::string const& title) {
@@ -511,11 +514,12 @@ namespace PlaylistCore {
         std::filesystem::remove(GetPlaylistBackupPath(playlist->path));
         // remove name from order config
         int orderIndex = GetPlaylistIndex(playlist->path);
+        auto orderVec = getConfig().Order.GetValue();
         if(orderIndex >= 0)
-            playlistConfig.Order.erase(playlistConfig.Order.begin() + orderIndex);
+            orderVec.erase(orderVec.begin() + orderIndex);
         else
-            playlistConfig.Order.erase(playlistConfig.Order.end() - 1);
-        SaveConfig();
+            orderVec.erase(orderVec.end() - 1);
+        getConfig().Order.SetValue(orderVec);
         // delete playlist object
         delete playlist;
     }
