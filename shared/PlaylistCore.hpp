@@ -88,6 +88,12 @@ namespace PlaylistCore {
     /// @return The path of the created playlist
     std::string AddPlaylist(std::string const& title, std::string const& author, UnityEngine::Sprite* coverImage = nullptr);
 
+    /// @brief Creates a new playlist file
+    /// @param playlist The BPList object to create
+    /// @param reloadPlaylists Whether to reload playlists (not fully) after creating
+    /// @return The path to the created playlist and the playlist itself if loaded, otherwise nullptr
+    std::pair<std::string, Playlist*> AddPlaylist(BPList playlist, bool reloadPlaylists = true);
+
     /// @brief Moves a playlist in the order config - does not reload playlists
     /// @param playlist The playlist to be moved
     /// @param index The index to move the playlist to
@@ -110,7 +116,7 @@ namespace PlaylistCore {
     /// @brief Reloads playlists
     /// @param fullReload Whether to reload the contents of already loaded playlists
     void ReloadPlaylists(bool fullReload = false);
-    
+
     /// @brief Makes a single playlist be fully reloaded on the next reload
     /// @param playlist The playlist to be reloaded
     void MarkPlaylistForReload(Playlist* playlist);

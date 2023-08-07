@@ -33,7 +33,7 @@ using namespace RuntimeSongLoader;
 using namespace PlaylistCore::Utils;
 
 namespace PlaylistCore {
-    
+
     std::map<std::string, Playlist*> path_playlists;
     std::unordered_map<UnityEngine::Sprite*, std::string> image_paths;
 
@@ -52,7 +52,7 @@ namespace PlaylistCore {
         if(!WriteToFile(path, playlistJSON) || !WriteToFile(GetPlaylistBackupPath(path), playlistJSON))
             LOG_ERROR("Error saving playlist! Path: %s", path.c_str());
     }
-    
+
     UnityEngine::Sprite* GetDefaultCoverImage() {
         return FindComponent<GlobalNamespace::CustomLevelLoader*>()->defaultPackCover;
     }
@@ -392,7 +392,7 @@ namespace PlaylistCore {
             return nullptr;
         return iter->second;
     }
-    
+
     Playlist* GetPlaylistWithPrefix(std::string const& id) {
         static const int prefixLength = std::string(CustomLevelPackPrefixID).length();
         if(id.starts_with(CustomLevelPackPrefixID))
@@ -449,6 +449,20 @@ namespace PlaylistCore {
         // update backups
         WriteToFile(GetPlaylistBackupPath(path), newPlaylist);
         return path;
+    }
+
+    std::pair<std::string, Playlist*> AddPlaylist(BPList playlist, bool reloadPlaylists) {
+        // save playlist
+        std::string path = GetNewPlaylistPath(playlist.PlaylistTitle);
+        WriteToFile(path, playlist);
+        // update backups
+        WriteToFile(GetPlaylistBackupPath(path), playlist);
+        Playlist* ret = nullptr;
+        if (reloadPlaylists) {
+            ReloadPlaylists();
+            ret = GetPlaylist(path);
+        }
+        return {path, ret};
     }
 
     void MovePlaylist(Playlist* playlist, int index) {
