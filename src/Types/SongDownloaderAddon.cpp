@@ -4,17 +4,20 @@
 #include "CustomTypes/CoverTableCell.hpp"
 #include "PlaylistCore.hpp"
 
-#include "questui/shared/BeatSaberUI.hpp"
+#include "bsml/shared/BSML-Lite.hpp"
+#include "bsml/shared/Helpers/creation.hpp"
 
 #include "HMUI/Touchable.hpp"
 #include "HMUI/ScrollView.hpp"
-#include "HMUI/TableView_ScrollPositionType.hpp"
+#include "HMUI/TableView.hpp"
 #include "System/Collections/Generic/HashSet_1.hpp"
+#include "UnityEngine/UI/ContentSizeFitter.hpp"
+#include "UnityEngine/UI/LayoutElement.hpp"
 
 DEFINE_TYPE(PlaylistCore, SongDownloaderAddon);
 
 using namespace PlaylistCore;
-using namespace QuestUI;
+using namespace BSML;
 
 Playlist* SongDownloaderAddon::SelectedPlaylist = nullptr;
 
@@ -41,7 +44,7 @@ void SongDownloaderAddon::DidActivate(bool firstActivation, bool addedToHierarch
 
     get_gameObject()->AddComponent<HMUI::Touchable*>();
 
-    list = BeatSaberUI::CreateScrollableCustomSourceList<CustomListSource*>(get_transform(), {-50, -40}, {15, 70}, [this](int cellIdx) {
+    list = Lite::CreateScrollableCustomSourceList<CustomListSource*>(get_transform(), {-50, -40}, {15, 70}, [this](int cellIdx) {
         playlistSelected(cellIdx);
     });
     list->setType(csTypeOf(CoverTableCell*));
@@ -49,7 +52,7 @@ void SongDownloaderAddon::DidActivate(bool firstActivation, bool addedToHierarch
 
     RefreshPlaylists();
 
-    auto toggle = BeatSaberUI::CreateToggle(get_transform(), "Download To Playlist", downloadToPlaylistEnabled, {-50, -75}, [this](bool enabled) {
+    auto toggle = Lite::CreateToggle(get_transform(), "Download To Playlist", downloadToPlaylistEnabled, {-50, -75}, [this](bool enabled) {
         downloadToPlaylistEnabled = enabled;
         if(enabled)
             SongDownloaderAddon::SelectedPlaylist = selectedPlaylist;
@@ -77,5 +80,5 @@ void SongDownloaderAddon::RefreshPlaylists() {
 }
 
 SongDownloaderAddon* SongDownloaderAddon::Create() {
-    return BeatSaberUI::CreateViewController<SongDownloaderAddon*>();
+    return BSML::Helpers::CreateViewController<SongDownloaderAddon*>();
 }

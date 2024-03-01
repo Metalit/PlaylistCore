@@ -15,8 +15,7 @@
 
 #include "beatsaber-hook/shared/utils/il2cpp-utils.hpp"
 
-#include "questui/shared/BeatSaberUI.hpp"
-#include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
+#include "bsml/shared/BSML/MainThreadScheduler.hpp"
 
 #include "songdownloader/shared/BeatSaverAPI.hpp"
 
@@ -26,8 +25,10 @@
 #include "UnityEngine/Resources.hpp"
 #include "UnityEngine/ImageConversion.hpp"
 #include "UnityEngine/SpriteMeshType.hpp"
+#include "UnityEngine/TextureFormat.hpp"
 #include "GlobalNamespace/CustomLevelLoader.hpp"
 #include "GlobalNamespace/CustomPreviewBeatmapLevel.hpp"
+#include "GlobalNamespace/IBeatmapLevelCollection.hpp"
 
 using namespace RuntimeSongLoader;
 using namespace PlaylistCore::Utils;
@@ -46,7 +47,7 @@ namespace PlaylistCore {
     // playlists that need to be reloaded on the next reload
     std::unordered_set<Playlist*> needsReloadPlaylists{};
     // functions that filter out playlists from being shown
-    std::vector<std::pair<ModInfo, std::function<bool(std::string const& path)>>> playlistFilters;
+    std::vector<std::pair<modloader::ModInfo, std::function<bool(std::string const& path)>>> playlistFilters;
 
     void Playlist::Save() {
         if(!WriteToFile(path, playlistJSON) || !WriteToFile(GetPlaylistBackupPath(path), playlistJSON))
@@ -54,7 +55,7 @@ namespace PlaylistCore {
     }
 
     UnityEngine::Sprite* GetDefaultCoverImage() {
-        return FindComponent<GlobalNamespace::CustomLevelLoader*>()->defaultPackCover;
+        return FindComponent<GlobalNamespace::CustomLevelLoader*>()->_defaultPackCover;
     }
 
     UnityEngine::Sprite* GetCoverImage(Playlist* playlist) {
@@ -168,7 +169,7 @@ namespace PlaylistCore {
                 auto size = instream.tellg();
                 instream.seekg(0, instream.beg);
                 auto bytes = Array<uint8_t>::NewLength(size);
-                instream.read(reinterpret_cast<char*>(bytes->values), size);
+                instream.read(reinterpret_cast<char*>(bytes->_values), size);
                 std::string imageString = System::Convert::ToBase64String(bytes);
                 if(HasCachedSprite(imageString)) {
                     LOG_INFO("Skipping loading image %s", path.string().c_str());
@@ -232,7 +233,7 @@ namespace PlaylistCore {
         if(!IsPlaylistShown("Defaults")) {
             LOG_INFO("Removing default playlists from being shown");
             GlobalNamespace::CustomBeatmapLevelPack *customsPack = nullptr, *customWIPsPack = nullptr;
-            for(auto& pack : customBeatmapLevelPackCollectionSO->customBeatmapLevelPacks->items) {
+            for(auto& pack : customBeatmapLevelPackCollectionSO->customBeatmapLevelPacks->_items) {
                 if(!pack)
                     continue;
                 if(pack->get_packName() == "Custom Levels")
@@ -305,7 +306,7 @@ namespace PlaylistCore {
                         auto& songs = playlist->playlistJSON.Songs;
                         std::unordered_set<std::string> hashes{};
                         // add all songs to the playlist object
-                        auto foundSongs = List<GlobalNamespace::CustomPreviewBeatmapLevel*>::New_ctor();
+                        auto foundSongs = ListW<GlobalNamespace::CustomPreviewBeatmapLevel*>::New();
                         for(auto itr = songs.begin(); itr != songs.end(); itr++) {
                             LOWER(itr->Hash);
                             if(hashes.contains(itr->Hash)) {
@@ -420,11 +421,11 @@ namespace PlaylistCore {
         return shown;
     }
 
-    void AddPlaylistFilter(ModInfo mod, std::function<bool(std::string const& path)> func) {
+    void AddPlaylistFilter(modloader::ModInfo mod, std::function<bool(std::string const& path)> func) {
         playlistFilters.emplace_back(std::make_pair(mod, func));
     }
 
-    void RemovePlaylistFilters(ModInfo mod) {
+    void RemovePlaylistFilters(modloader::ModInfo mod) {
         for(auto itr = playlistFilters.begin(); itr != playlistFilters.end(); itr++) {
             if(itr->first.id == mod.id && itr->first.version == mod.version) {
                 playlistFilters.erase(itr);
@@ -484,8 +485,8 @@ namespace PlaylistCore {
         // rename playlist ingame
         auto& levelPack = playlist->playlistCS;
         if(levelPack) {
-            levelPack->packName = title;
-            levelPack->shortPackName = title;
+            levelPack->____packName_k__BackingField = title;
+            levelPack->____shortPackName_k__BackingField = title;
         }
         // save changes
         playlist->Save();
@@ -509,8 +510,8 @@ namespace PlaylistCore {
         // change cover ingame
         auto& levelPack = playlist->playlistCS;
         if(levelPack) {
-            levelPack->coverImage = newCover;
-            levelPack->smallCoverImage = newCover;
+            levelPack->____coverImage_k__BackingField = newCover;
+            levelPack->____smallCoverImage_k__BackingField = newCover;
         }
         playlist->Save();
     }
@@ -563,7 +564,7 @@ namespace PlaylistCore {
             // search in songs in playlist instead of all songs
             // we need to treat the list as an array because it is initialized as an array elsewhere
             ArrayW<GlobalNamespace::IPreviewBeatmapLevel*> levelList(playlist->playlistCS->beatmapLevelCollection->get_beatmapLevels());
-            for(int i = 0; i < levelList.Length(); i++) {
+            for(int i = 0; i < levelList.size(); i++) {
                 if(hash == GetLevelHash(levelList[i])) {
                     hasSong = true;
                     break;
@@ -598,7 +599,7 @@ namespace PlaylistCore {
             // search in songs in playlist instead of all songs
             // we need to treat the list as an array because it is initialized as an array elsewhere
             ArrayW<GlobalNamespace::IPreviewBeatmapLevel*> levelList(playlist->playlistCS->beatmapLevelCollection->get_beatmapLevels());
-            for(int i = 0; i < levelList.Length(); i++) {
+            for(int i = 0; i < levelList.size(); i++) {
                 if(hash == GetLevelHash(levelList[i])) {
                     hasSong = true;
                     break;
@@ -622,9 +623,9 @@ namespace PlaylistCore {
                 BeatSaver::API::DownloadBeatmapAsync(beatmap.value(), [finishCallback, updateCallback, quantity, downloads](bool _) {
                     bool complete = (*downloads)++ == quantity - 1;
                     if(updateCallback)
-                        QuestUI::MainThreadScheduler::Schedule([updateCallback, quantity, downloads]() { updateCallback(*downloads, quantity); });
+                        BSML::MainThreadScheduler::Schedule([updateCallback, quantity, downloads]() { updateCallback(*downloads, quantity); });
                     if(complete && finishCallback) {
-                        QuestUI::MainThreadScheduler::Schedule(finishCallback);
+                        BSML::MainThreadScheduler::Schedule(finishCallback);
                         delete downloads;
                     }
                 });
@@ -632,9 +633,9 @@ namespace PlaylistCore {
                 LOG_INFO("Beatmap not found on beatsaver");
                 bool complete = (*downloads)++ == quantity - 1;
                 if(updateCallback)
-                    QuestUI::MainThreadScheduler::Schedule([updateCallback, quantity, downloads]() { updateCallback(*downloads, quantity); });
+                    BSML::MainThreadScheduler::Schedule([updateCallback, quantity, downloads]() { updateCallback(*downloads, quantity); });
                 if(complete && finishCallback) {
-                    QuestUI::MainThreadScheduler::Schedule(finishCallback);
+                    BSML::MainThreadScheduler::Schedule(finishCallback);
                     delete downloads;
                 }
             }
@@ -670,16 +671,16 @@ namespace PlaylistCore {
         if(!pack)
             return;
         ArrayW<GlobalNamespace::IPreviewBeatmapLevel*> levelList(pack->beatmapLevelCollection->get_beatmapLevels());
-        ArrayW<GlobalNamespace::IPreviewBeatmapLevel*> newLevels(levelList.Length() + 1);
-        for(int i = 0; i < levelList.Length(); i++) {
+        ArrayW<GlobalNamespace::IPreviewBeatmapLevel*> newLevels(levelList.size() + 1);
+        for(int i = 0; i < levelList.size(); i++) {
             auto currentLevel = levelList[i];
             if(currentLevel->get_levelID() == level->get_levelID())
                 return;
             newLevels[i] = currentLevel;
         }
-        newLevels[levelList.Length()] = level;
+        newLevels[levelList.size()] = level;
         auto readOnlyList = (System::Collections::Generic::IReadOnlyList_1<GlobalNamespace::CustomPreviewBeatmapLevel*>*) newLevels.convert();
-        ((GlobalNamespace::CustomBeatmapLevelCollection*) pack->beatmapLevelCollection)->customPreviewBeatmapLevels = readOnlyList;
+        ((GlobalNamespace::CustomBeatmapLevelCollection*) pack->beatmapLevelCollection)->_customPreviewBeatmapLevels = readOnlyList;
         // update json object
         auto& json = playlist->playlistJSON;
         // add a blank song
@@ -700,12 +701,12 @@ namespace PlaylistCore {
         if(!pack)
             return;
         ArrayW<GlobalNamespace::IPreviewBeatmapLevel*> levelList(pack->beatmapLevelCollection->get_beatmapLevels());
-        if(levelList.Length() == 0)
+        if(levelList.size() == 0)
             return;
-        ArrayW<GlobalNamespace::IPreviewBeatmapLevel*> newLevels(levelList.Length() - 1);
+        ArrayW<GlobalNamespace::IPreviewBeatmapLevel*> newLevels(levelList.size() - 1);
         // remove only one level if duplicates
         bool removed = false;
-        for(int i = 0; i < newLevels.Length(); i++) {
+        for(int i = 0; i < newLevels.size(); i++) {
             // comparison should work
             auto currentLevel = levelList[removed ? i + 1 : i];
             if(currentLevel->get_levelID() == level->get_levelID()) {
@@ -714,12 +715,12 @@ namespace PlaylistCore {
             } else
                 newLevels[i] = currentLevel;
         }
-        if(!removed && levelList.Last()->get_levelID() != level->get_levelID()) {
+        if(!removed && levelList->Last()->get_levelID() != level->get_levelID()) {
             LOG_ERROR("Could not find song to be removed!");
             return;
         }
         auto readOnlyList = (System::Collections::Generic::IReadOnlyList_1<GlobalNamespace::CustomPreviewBeatmapLevel*>*) newLevels.convert();
-        ((GlobalNamespace::CustomBeatmapLevelCollection*) pack->beatmapLevelCollection)->customPreviewBeatmapLevels = readOnlyList;
+        ((GlobalNamespace::CustomBeatmapLevelCollection*) pack->beatmapLevelCollection)->_customPreviewBeatmapLevels = readOnlyList;
         // update json object
         auto& json = playlist->playlistJSON;
         // find song by hash (since the field is required) and remove
@@ -750,14 +751,14 @@ namespace PlaylistCore {
         if(!pack)
             return;
         ArrayW<GlobalNamespace::IPreviewBeatmapLevel*> levelList(pack->beatmapLevelCollection->get_beatmapLevels());
-        if(index >= levelList.Length() || index < 0)
+        if(index >= levelList.size() || index < 0)
             return;
-        ArrayW<GlobalNamespace::IPreviewBeatmapLevel*> newLevels(levelList.Length());
+        ArrayW<GlobalNamespace::IPreviewBeatmapLevel*> newLevels(levelList.size());
         bool found = false;
         // ensure we traverse the whole of both lists
-        for(int i = 0, j = 0; i < newLevels.Length() || j < levelList.Length(); i++) {
+        for(int i = 0, j = 0; i < newLevels.size() || j < levelList.size(); i++) {
             // skip past level in original list, but only the first time
-            if(j < levelList.Length() && levelList[j]->get_levelID() == level->get_levelID() && !found) {
+            if(j < levelList.size() && levelList[j]->get_levelID() == level->get_levelID() && !found) {
                 j++;
                 found = true;
             }
@@ -765,14 +766,14 @@ namespace PlaylistCore {
             if(i == index) {
                 j--;
                 newLevels[i] = level;
-            } else if(i < newLevels.Length()) {
+            } else if(i < newLevels.size()) {
                 newLevels[i] = levelList[j];
             }
             j++;
         }
         if(found) {
             auto readOnlyList = (System::Collections::Generic::IReadOnlyList_1<GlobalNamespace::CustomPreviewBeatmapLevel*>*) newLevels.convert();
-            ((GlobalNamespace::CustomBeatmapLevelCollection*) pack->beatmapLevelCollection)->customPreviewBeatmapLevels = readOnlyList;
+            ((GlobalNamespace::CustomBeatmapLevelCollection*) pack->beatmapLevelCollection)->_customPreviewBeatmapLevels = readOnlyList;
         } else {
             LOG_ERROR("Could not find song to be moved!");
             return;

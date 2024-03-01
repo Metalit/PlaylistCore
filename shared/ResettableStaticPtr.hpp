@@ -28,7 +28,7 @@ if(!name) name = definition;
 
 template<class T>
 T FindComponent() {
-    STATIC_AUTO(cachedComponent, UnityEngine::Resources::FindObjectsOfTypeAll<T>().FirstOrDefault());
+    STATIC_AUTO(cachedComponent, UnityEngine::Resources::FindObjectsOfTypeAll<T>()->FirstOrDefault());
     if(!cachedComponent) SAFE_ABORT();
     return cachedComponent;
 }

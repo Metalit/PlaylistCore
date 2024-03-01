@@ -1,16 +1,14 @@
 #include "Main.hpp"
 #include "CustomTypes/CustomListSource.hpp"
 
-#include "questui/shared/BeatSaberUI.hpp"
-#include "questui/shared/CustomTypes/Components/List/QuestUITableView.hpp"
-
-#include "HMUI/TableView_ScrollPositionType.hpp"
+#include "bsml/shared/BSML-Lite.hpp"
+#include "bsml/shared/BSML/Components/TableView.hpp"
 
 DEFINE_TYPE(PlaylistCore, CustomTableCell);
 DEFINE_TYPE(PlaylistCore, CustomListSource);
 
 using namespace PlaylistCore;
-using namespace QuestUI;
+using namespace BSML;
 
 // copied from questui
 void CustomListSource::ctor() {
@@ -33,14 +31,14 @@ HMUI::TableCell* CustomListSource::CellForIdx(HMUI::TableView* tableView, int id
         return nullptr;
     }
     // check for available reusable cells
-    CustomTableCell* reusableCell = (CustomTableCell*) tableView->DequeueReusableCellForIdentifier(reuseIdentifier);
+    CustomTableCell* reusableCell = (CustomTableCell*) tableView->DequeueReusableCellForIdentifier(reuseIdentifier).ptr();
     if(!reusableCell) {
         // create a new cell
         static ConstString name("CustomCellGameObject");
         auto cellObject = UnityEngine::GameObject::New_ctor(name);
         auto rectTransform = cellObject->AddComponent<UnityEngine::RectTransform*>();
         rectTransform->set_sizeDelta({15, 15});
-        reusableCell = (CustomTableCell*) cellObject->AddComponent(type);
+        reusableCell = (CustomTableCell*) cellObject->AddComponent(type).ptr();
         reusableCell->set_reuseIdentifier(reuseIdentifier);
         reusableCell->init(getSprite(idx), getText(idx));
     } else {
@@ -109,8 +107,8 @@ std::string CustomListSource::getText(int index) {
 
 // static scroll methods
 void CustomListSource::ScrollListLeft(CustomListSource* list, int numCells) {
-    // get table view as questui table view
-    auto tableView = CRASH_UNLESS(il2cpp_utils::GetFieldValue<QuestUI::TableView*>(reinterpret_cast<Il2CppObject*>(list), "tableView"));
+    // get table view as bsml table view
+    auto tableView = reinterpret_cast<BSML::TableView*>(list->tableView);
     // both assume the table is vertical
     // int idx = tableView->get_scrolledRow();
     // idx -= tableView->get_scrollDistance();
@@ -121,8 +119,8 @@ void CustomListSource::ScrollListLeft(CustomListSource* list, int numCells) {
 }
 
 void CustomListSource::ScrollListRight(CustomListSource* list, int numCells) {
-    // get table view as questui table view
-    auto tableView = CRASH_UNLESS(il2cpp_utils::GetFieldValue<QuestUI::TableView*>(reinterpret_cast<Il2CppObject*>(list), "tableView"));
+    // get table view as bsml table view
+    auto tableView = reinterpret_cast<BSML::TableView*>(list->tableView);
     // both assume the table is vertical
     // int idx = tableView->get_scrolledRow();
     // idx += tableView->get_scrollDistance();

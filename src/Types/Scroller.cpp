@@ -27,7 +27,7 @@ using namespace PlaylistCore;
 float fixedCellHeight = 15;
 
 void Scroller::Awake() {
-    platformHelper = FindComponent<GlobalNamespace::VRController*>()->vrPlatformHelper;
+    platformHelper = FindComponent<GlobalNamespace::VRController*>()->_vrPlatformHelper;
 
     auto eventListener = GetComponent<HMUI::EventSystemListener*>();
     if(!eventListener)
@@ -64,7 +64,7 @@ void Scroller::Init(UnityEngine::RectTransform* content) {
 
 void Scroller::HandlePointerDidEnter(UnityEngine::EventSystems::PointerEventData* pointerEventData) {
     if(!addedDelegate) {
-        platformHelper->add_joystickWasNotCenteredThisFrameEvent(ACTION_1(UnityEngine::Vector2, HandleJoystickWasNotCenteredThisFrame));
+        //platformHelper->add_joystickWasNotCenteredThisFrameEvent(ACTION_1(UnityEngine::Vector2, HandleJoystickWasNotCenteredThisFrame));
         addedDelegate = true;
     }
     pointerHovered = true;

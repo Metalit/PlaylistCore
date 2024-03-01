@@ -75,11 +75,11 @@ namespace PlaylistCore {
     /// The function will receive the path to each custom playlist, and the string literal "Defaults" for the Custom and Custom WIP playlists
     /// @param mod The ModInfo of the mod registering the filter
     /// @param function The filter function - takes a playlist path and returns whether it should be shown
-    void AddPlaylistFilter(ModInfo mod, std::function<bool(std::string const& path)> function);
+    void AddPlaylistFilter(modloader::ModInfo mod, std::function<bool(std::string const& path)> function);
 
     /// @brief Removes all of the playlist filter functions added by a mod
     /// @param mod The ModInfo of the mod
-    void RemovePlaylistFilters(ModInfo mod);
+    void RemovePlaylistFilters(modloader::ModInfo mod);
 
     /// @brief Creates a new playlist file - does not load it
     /// @param title The name of the playlist to be created
