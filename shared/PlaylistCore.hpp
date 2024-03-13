@@ -2,9 +2,9 @@
 
 #include "Types/BPList.hpp"
 #include "SimpleSafePtr.hpp"
-#include "songloader/shared/CustomTypes/SongLoaderBeatmapLevelPackCollectionSO.hpp"
+#include "songloader/shared/CustomTypes/SongLoaderBeatmapLevelsRepository.hpp"
 #include "songloader/shared/CustomTypes/SongLoaderCustomBeatmapLevelPack.hpp"
-#include "GlobalNamespace/IPreviewBeatmapLevel.hpp"
+#include "GlobalNamespace/BeatmapLevel.hpp"
 #include "UnityEngine/Sprite.hpp"
 #include "UnityEngine/Texture2D.hpp"
 
@@ -13,7 +13,7 @@ namespace PlaylistCore {
     /// @brief A struct that wraps the data for a playlist
     struct Playlist {
         BPList playlistJSON;
-        SimpleSafePtr<GlobalNamespace::CustomBeatmapLevelPack> playlistCS;
+        SimpleSafePtr<GlobalNamespace::BeatmapLevelPack> playlistCS;
         std::string name;
         std::string path;
         int imageIndex = -1;
@@ -47,9 +47,9 @@ namespace PlaylistCore {
     void ClearLoadedImages();
 
     /// @brief Loads all playlists from the playlists folder, adding them to the collection
-    /// @param customBeatmapLevelPackCollectionSO The level pack collection that the loaded playlists will be added to
+    /// @param customBeatmapLevelsRepository The level pack collection that the loaded playlists will be added to
     /// @param fullReload Whether to reload the contents of already loaded playlists
-    void LoadPlaylists(RuntimeSongLoader::SongLoaderBeatmapLevelPackCollectionSO* customBeatmapLevelPackCollectionSO, bool fullReload = false);
+    void LoadPlaylists(RuntimeSongLoader::SongLoaderBeatmapLevelsRepository* customBeatmapLevelsRepository, bool fullReload = false);
 
     /// @brief Gets all playlists that are loaded
     /// @return A vector of all loaded playlists in order
@@ -139,19 +139,19 @@ namespace PlaylistCore {
     /// @brief Adds a song to a playlist - does not reload playlists
     /// @param playlist The playlist to add the song to
     /// @param level The song to add to the playlist
-    void AddSongToPlaylist(Playlist* playlist, GlobalNamespace::IPreviewBeatmapLevel* level);
+    void AddSongToPlaylist(Playlist* playlist, GlobalNamespace::BeatmapLevel* level);
 
     /// @brief Removes a song from a playlist - does not reload playlists
     /// @param playlist The playlist to remove the song from
     /// @param level The song to remove from the playlist
-    void RemoveSongFromPlaylist(Playlist* playlist, GlobalNamespace::IPreviewBeatmapLevel* level);
+    void RemoveSongFromPlaylist(Playlist* playlist, GlobalNamespace::BeatmapLevel* level);
 
     /// @brief Removes a song from all loaded playlists - does not reload playlists
     /// @param level The song to remove from all playlists
-    void RemoveSongFromAllPlaylists(GlobalNamespace::IPreviewBeatmapLevel* level);
+    void RemoveSongFromAllPlaylists(GlobalNamespace::BeatmapLevel* level);
 
     /// @brief Changes the index of a song inside a playlist - does not reload playlists
     /// @param playlist The playlist containing the song to be reordered
     /// @param index The new index for the song to be at
-    void SetSongIndex(Playlist* playlist, GlobalNamespace::IPreviewBeatmapLevel* level, int index);
+    void SetSongIndex(Playlist* playlist, GlobalNamespace::BeatmapLevel* level, int index);
 }

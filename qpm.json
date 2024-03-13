@@ -22,12 +22,12 @@
     },
     {
       "id": "bs-cordl",
-      "versionRange": "^3402.0.0",
+      "versionRange": "^3500.0.0",
       "additionalData": {}
     },
     {
       "id": "bsml",
-      "versionRange": "^0.4.8",
+      "versionRange": "^0.5.0",
       "additionalData": {
         "private": true
       }
@@ -45,13 +45,6 @@
       "additionalData": {}
     },
     {
-      "id": "songdownloader",
-      "versionRange": "^0.7.0",
-      "additionalData": {
-        "private": true
-      }
-    },
-    {
       "id": "scotland2",
       "versionRange": "*",
       "additionalData": {
@@ -62,13 +55,6 @@
       "id": "rapidjson-macros",
       "versionRange": "*",
       "additionalData": {}
-    },
-    {
-      "id": "bsml",
-      "versionRange": "^0.4.8",
-      "additionalData": {
-        "private": true
-      }
     },
     {
       "id": "config-utils",
