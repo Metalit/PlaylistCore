@@ -89,19 +89,6 @@ std::string GetCoversPath() {
     return coversPath;
 }
 
-// small fix for horizontal tables
-MAKE_HOOK_MATCH(TableView_ReloadDataKeepingPosition, &HMUI::TableView::ReloadDataKeepingPosition,
-        void, HMUI::TableView* self) {
-
-    self->ReloadData();
-
-    auto rect = self->viewportTransform->get_rect();
-    float viewSize = (self->tableType == HMUI::TableView::TableType::Vertical) ? rect.get_height() : rect.get_width();
-    float position = self->scrollView->get_position();
-
-    self->scrollView->ScrollTo(std::min(position, std::max(self->cellSize * self->numberOfCells - viewSize, 0.0f)), false);
-}
-
 // override header cell behavior and change no data prefab
 MAKE_HOOK_MATCH(LevelCollectionViewController_SetData, &LevelCollectionViewController::SetData,
         void, LevelCollectionViewController* self, ArrayW<GlobalNamespace::BeatmapLevel*> beatmapLevels, StringW headerText, UnityEngine::Sprite* headerSprite, bool sortLevels, bool sortPreviewBeatmapLevels, UnityEngine::GameObject* noDataInfoPrefab) {
@@ -115,9 +102,9 @@ MAKE_HOOK_MATCH(LevelCollectionViewController_SetData, &LevelCollectionViewContr
         self->_noDataInfoGO = nullptr;
     }
     // also override check for empty collection
-    if(beatmapLevels) {
+    if(beatmapLevels ) {
         self->_levelCollectionTableView->get_gameObject()->SetActive(true);
-        self->_levelCollectionTableView->SetData(ListW<GlobalNamespace::BeatmapLevel*>::New(beatmapLevels)->i___System__Collections__Generic__IReadOnlyList_1_T_(), self->_playerDataModel->playerData->favoritesLevelIds, sortLevels, sortPreviewBeatmapLevels);
+        self->_levelCollectionTableView->SetData(reinterpret_cast<System::Collections::Generic::IReadOnlyList_1<GlobalNamespace::BeatmapLevel*>*>(beatmapLevels.convert()), self->_playerDataModel->playerData->favoritesLevelIds, sortLevels, sortPreviewBeatmapLevels);
         self->_levelCollectionTableView->RefreshLevelsAvailability();
     } else {
         self->_levelCollectionTableView->SetData(ListW<GlobalNamespace::BeatmapLevel*>::New()->i___System__Collections__Generic__IReadOnlyList_1_T_(), self->_playerDataModel->playerData->favoritesLevelIds, sortLevels, sortPreviewBeatmapLevels);
@@ -291,8 +278,7 @@ extern "C" void late_load() {
 
     hasManager = modloader_require_mod(new CModInfo("PlaylistManager", VERSION, 0), CMatchType::MatchType_IdOnly);
 
-    //INSTALL_HOOK_ORIG(getLogger(), TableView_ReloadDataKeepingPosition);
-    //INSTALL_HOOK_ORIG(getLogger(), LevelCollectionViewController_SetData);
+    INSTALL_HOOK_ORIG(getLogger(), LevelCollectionViewController_SetData);
     INSTALL_HOOK(getLogger(), AnnotatedBeatmapLevelCollectionsGridView_OnEnable);
     INSTALL_HOOK(getLogger(), AnnotatedBeatmapLevelCollectionsGridViewAnimator_AnimateOpen);
     INSTALL_HOOK(getLogger(), AnnotatedBeatmapLevelCollectionsGridViewAnimator_ScrollToRowIdxInstant);
@@ -305,6 +291,6 @@ extern "C" void late_load() {
             LoadPlaylists(customBeatmapLevelsRepository, true);
         }
     );
-    
+        
     LOG_INFO("Successfully installed PlaylistCore!");
 }
