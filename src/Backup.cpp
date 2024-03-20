@@ -7,18 +7,20 @@
 
 #include "Types/BPList.hpp"
 
-#include "GlobalNamespace/SharedCoroutineStarter.hpp"
+#include "bsml/shared/BSML/SharedCoroutineStarter.hpp"
 #include "UnityEngine/WaitForFixedUpdate.hpp"
 #include "UnityEngine/ImageConversion.hpp"
+#include "GlobalNamespace/MainMenuViewController.hpp"
 #include "System/Convert.hpp"
 
-#include "questui/shared/BeatSaberUI.hpp"
+#include "bsml/shared/BSML-Lite.hpp"
+
 #include "custom-types/shared/coroutine.hpp"
 
 #include <filesystem>
 
 using namespace PlaylistCore;
-using namespace QuestUI;
+using namespace BSML;
 
 bool FixImageString(std::optional<std::string>& optional) {
     if(!optional.has_value())
@@ -255,33 +257,33 @@ RestoreFunc backupFunction;
 // significant credit for the ui to https://github.com/jk4837/PlaylistEditor/blob/master/src/Utils/UIUtils.cpp
 HMUI::ModalView* MakeDialog() {
     auto parent = FindComponent<GlobalNamespace::MainMenuViewController*>()->get_transform();
-    auto modal = BeatSaberUI::CreateModal(parent, {65, 41}, nullptr, false);
+    auto modal = Lite::CreateModal(parent, {65, 41}, nullptr, false);
 
     static ConstString contentName("Content");
 
-    auto restoreButton = BeatSaberUI::CreateUIButton(modal->get_transform(), "No", "ActionButton", {-16, -14}, [modal] {
+    auto restoreButton = Lite::CreateUIButton(modal->get_transform(), "No", "ActionButton", {-16, -14}, [modal] {
         LOG_INFO("Restoring backup");
-        modal->Hide(true, nullptr);
+        modal->Hide();
         backupFunction();
         ReloadPlaylists();
     });
     UnityEngine::Object::Destroy(restoreButton->get_transform()->Find(contentName)->GetComponent<UnityEngine::UI::LayoutElement*>());
 
-    auto cancelButton = QuestUI::BeatSaberUI::CreateUIButton(modal->get_transform(), "Yes", {16, -14}, [modal] {
-        modal->Hide(true, nullptr);
+    auto cancelButton = Lite::CreateUIButton(modal->get_transform(), "Yes", {16, -14}, [modal] {
+        modal->Hide();
         std::filesystem::remove_all(GetBackupsPath());
         std::filesystem::copy(GetPlaylistsPath(), GetBackupsPath());
         ReloadPlaylists();
     });
     UnityEngine::Object::Destroy(cancelButton->get_transform()->Find(contentName)->GetComponent<UnityEngine::UI::LayoutElement*>());
 
-    TMPro::TextMeshProUGUI* title = BeatSaberUI::CreateText(modal->get_transform(), "Playlist Core", false, {0, 16}, {60, 8.5});
+    TMPro::TextMeshProUGUI* title = Lite::CreateText(modal->get_transform(), "Playlist Core", false, {0, 16}, {60, 8.5});
     title->set_alignment(TMPro::TextAlignmentOptions::Center);
     title->set_fontStyle(TMPro::FontStyles::Bold);
 
     static ConstString dialogText("External playlist modifications detected (likely through BMBF). Changes made ingame may be lost. Would you like to keep the external changes?");
 
-    TMPro::TextMeshProUGUI* message = QuestUI::BeatSaberUI::CreateText(modal->get_transform(), dialogText, false, {0, 2}, {60, 25.5});
+    TMPro::TextMeshProUGUI* message = Lite::CreateText(modal->get_transform(), dialogText, false, {0, 2}, {60, 25.5});
     message->set_enableWordWrapping(true);
     message->set_alignment(TMPro::TextAlignmentOptions::Center);
 
@@ -302,6 +304,6 @@ void ShowBackupDialog(RestoreFunc backupFunc) {
     backupFunction = backupFunc;
     if(!backupFunction)
         return;
-    GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(
+    BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(
         custom_types::Helpers::CoroutineHelper::New(ShowBackupDialogCoroutine()) );
 }

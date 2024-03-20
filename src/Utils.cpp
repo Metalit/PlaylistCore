@@ -11,16 +11,16 @@
 #include "TMPro/TextMeshProUGUI.hpp"
 #include "System/Convert.hpp"
 #include "System/Action_4.hpp"
+#include "System/Collections/Generic/IReadOnlyList_1.hpp"
 #include "GlobalNamespace/LevelFilteringNavigationController.hpp"
 #include "GlobalNamespace/LevelCollectionNavigationController.hpp"
 #include "GlobalNamespace/LevelCollectionViewController.hpp"
 #include "GlobalNamespace/LevelCollectionTableView.hpp"
 #include "GlobalNamespace/LevelSelectionFlowCoordinator.hpp"
-#include "GlobalNamespace/IBeatmapLevelPackCollection.hpp"
-#include "GlobalNamespace/BeatmapLevelPackCollection.hpp"
-#include "GlobalNamespace/IAnnotatedBeatmapLevelCollection.hpp"
+#include "GlobalNamespace/BeatmapLevelsRepository.hpp"
 #include "GlobalNamespace/AnnotatedBeatmapLevelCollectionsGridView.hpp"
 #include "GlobalNamespace/PageControl.hpp"
+#include "GlobalNamespace/GridView.hpp"
 #include "GlobalNamespace/AnnotatedBeatmapLevelCollectionsGridViewAnimator.hpp"
 #include "GlobalNamespace/BeatmapLevelsModel.hpp"
 #include "GlobalNamespace/LevelSearchViewController.hpp"
@@ -34,8 +34,8 @@ namespace PlaylistCore {
         // desired image size
         const int imageSize = 512;
 
-        std::string GetLevelHash(GlobalNamespace::IPreviewBeatmapLevel* level) {
-            std::string id = level->get_levelID();
+        std::string GetLevelHash(GlobalNamespace::BeatmapLevel* level) {
+            std::string id = level->levelID;
             // should be in all songloader levels
             auto prefixIndex = id.find("custom_level_");
             if(prefixIndex == std::string::npos)
@@ -49,8 +49,8 @@ namespace PlaylistCore {
             return id;
         }
 
-        bool IsWipLevel(GlobalNamespace::IPreviewBeatmapLevel* level) {
-            return level->get_levelID().ends_with(" WIP");
+        bool IsWipLevel(GlobalNamespace::BeatmapLevel* level) {
+            return level->levelID.ends_with(" WIP");
         }
 
         void RemoveAllBMBFSuffixes() {
@@ -160,73 +160,69 @@ namespace PlaylistCore {
 
         void WriteImageToFile(std::string_view pathToPng, UnityEngine::Texture2D* texture) {
             auto bytes = UnityEngine::ImageConversion::EncodeToPNG(texture);
-            writefile(pathToPng, std::string((char*) bytes.begin(), bytes.Length()));
+            writefile(pathToPng, std::string((char*) bytes.begin(), bytes.size()));
         }
 
-        List<GlobalNamespace::IBeatmapLevelPack*>* GetCustomPacks() {
+        void SetCustomPacks(List<GlobalNamespace::BeatmapLevelPack*>* newPlaylists, bool updateSongs) {
             using namespace GlobalNamespace;
-            return List<IBeatmapLevelPack*>::New_ctor(*((System::Collections::Generic::IEnumerable_1<IBeatmapLevelPack*>**) &FindComponent<LevelFilteringNavigationController*>()->customLevelPacks));
-        }
-
-        void SetCustomPacks(List<GlobalNamespace::IBeatmapLevelPack*>* newPlaylists, bool updateSongs) {
-            using namespace GlobalNamespace;
-            auto packArray = newPlaylists->ToArray();
+            auto packList = ListW<GlobalNamespace::BeatmapLevelPack*>(newPlaylists);
+            auto packArray = packList.to_array();
             // more virtual pain
             // auto packReadOnly = (System::Collections::Generic::IReadOnlyList_1<IAnnotatedBeatmapLevelCollection*>*) newPlaylists->AsReadOnly();
-            auto packReadOnly = (System::Collections::Generic::IReadOnlyList_1<IAnnotatedBeatmapLevelCollection*>*) packArray.convert();
             // update in levels model to avoid resetting
             auto levelsModel = FindComponent<BeatmapLevelsModel*>();
-            levelsModel->customLevelPackCollection = (IBeatmapLevelPackCollection*) BeatmapLevelPackCollection::New_ctor(packArray);
+            //TODO
+            //levelsModel->_customLevelPackCollection = (IBeatmapLevelPackCollection*) BeatmapLevelPackCollection::New_ctor(packArray);
             // update in navigation controller also to avoid resetting
             auto navigationController = FindComponent<GlobalNamespace::LevelFilteringNavigationController*>();
             if(!navigationController->get_isInViewControllerHierarchy())
                 return;
-            navigationController->customLevelPacks = packArray;
+            navigationController->_customLevelPacks = packList->i___System__Collections__Generic__IReadOnlyList_1_T_();
             auto gameTableView = FindComponent<AnnotatedBeatmapLevelCollectionsGridView*>();
             // only update the game table if custom songs are selected
-            if(navigationController->selectLevelCategoryViewController->get_selectedLevelCategory() == SelectLevelCategoryViewController::LevelCategory::CustomSongs) {
+            if(navigationController->_selectLevelCategoryViewController->get_selectedLevelCategory() == SelectLevelCategoryViewController::LevelCategory::CustomSongs) {
                 // SetData causes the page control to reset, causing scrolling flashes
-                gameTableView->annotatedBeatmapLevelCollections = packReadOnly;
-                gameTableView->gridView->ReloadData();
-                gameTableView->pageControl->SetPagesCount(gameTableView->gridView->rowCount);
+                gameTableView->_annotatedBeatmapLevelCollections = packList->i___System__Collections__Generic__IReadOnlyList_1_T_();
+                gameTableView->_gridView->ReloadData();
+                gameTableView->_pageControl->SetPagesCount(gameTableView->_gridView->rowCount);
                 // update row count in animator and animated objects
-                gameTableView->animator->rowCount = gameTableView->gridView->rowCount;
-                auto sizeDelta = gameTableView->animator->contentTransform->get_sizeDelta();
-                sizeDelta.y = gameTableView->animator->rowHeight * gameTableView->animator->rowCount;
-                gameTableView->animator->contentTransform->set_sizeDelta(sizeDelta);
-                auto anchoredPosition = gameTableView->animator->contentTransform->get_anchoredPosition();
-                anchoredPosition.y = gameTableView->animator->GetContentYOffset();
-                gameTableView->animator->contentTransform->set_anchoredPosition(anchoredPosition);
+                gameTableView->_animator->_rowCount = gameTableView->_gridView->_rowCount;
+                auto sizeDelta = gameTableView->_animator->_contentTransform->get_sizeDelta();
+                sizeDelta.y = gameTableView->_animator->_rowHeight * gameTableView->_animator->_rowCount;
+                gameTableView->_animator->_contentTransform->set_sizeDelta(sizeDelta);
+                auto anchoredPosition = gameTableView->_animator->_contentTransform->get_anchoredPosition();
+                anchoredPosition.y = gameTableView->_animator->GetContentYOffset();
+                gameTableView->_animator->_contentTransform->set_anchoredPosition(anchoredPosition);
             }
             if(updateSongs) {
                 // concatenate arrays together
-                auto arr1 = navigationController->ostBeatmapLevelPacks;
-                auto arr2 = navigationController->musicPacksBeatmapLevelPacks;
-                ArrayW<IBeatmapLevelPack*> newAllPacks(arr1.Length() + arr2.Length() + packArray.Length());
-                for(int i = 0; i < arr1.Length(); i++)
+                auto arr1 = navigationController->_ostBeatmapLevelPacks;
+                auto arr2 = navigationController->_musicPacksBeatmapLevelPacks;
+                ArrayW<BeatmapLevelPack*> newAllPacks(arr1.size() + arr2.size() + packArray.size());
+                for(int i = 0; i < arr1.size(); i++)
                     newAllPacks[i] = arr1[i];
-                for(int i = 0; i < arr2.Length(); i++)
-                    newAllPacks[i + arr1.Length()] = arr2[i];
-                for(int i = 0; i < packArray.Length(); i++)
-                    newAllPacks[i + arr1.Length() + arr2.Length()] = packArray[i];
-                navigationController->allBeatmapLevelPacks = newAllPacks;
+                for(int i = 0; i < arr2.size(); i++)
+                    newAllPacks[i + arr1.size()] = arr2[i];
+                for(int i = 0; i < packArray.size(); i++)
+                    newAllPacks[i + arr1.size() + arr2.size()] = packArray[i];
+                navigationController->_allBeatmapLevelPacks = newAllPacks;
                 // update the levels shown in the search view controller
-                navigationController->levelSearchViewController->Setup(newAllPacks);
+                navigationController->_levelSearchViewController->Setup(newAllPacks);
                 // only invoke callbacks in custom songs view
-                if(navigationController->selectLevelCategoryViewController->get_selectedLevelCategory() == SelectLevelCategoryViewController::LevelCategory::CustomSongs) {
+                if(navigationController->_selectLevelCategoryViewController->get_selectedLevelCategory() == SelectLevelCategoryViewController::LevelCategory::CustomSongs) {
                     auto selectionCoordinator = FindComponent<LevelSelectionFlowCoordinator*>();
                     auto collectionController = FindComponent<LevelCollectionNavigationController*>();
-                    if(packArray.Length() > 0) {
+                    if(packArray.size() > 0) {
                         // select cell with index 0 and invoke callback
-                        if(gameTableView->selectedCellIndex == 0)
-                            collectionController->SetDataForPack(packArray.First(), true, !selectionCoordinator->get_hidePracticeButton(), selectionCoordinator->get_actionButtonText()); // skip to top of callback chain
+                        if(gameTableView->_selectedCellIndex == 0)
+                            collectionController->SetDataForPack(packArray->First(), true, !selectionCoordinator->get_hidePracticeButton(), selectionCoordinator->get_actionButtonText(), false); // skip to top of callback chain
                         else
                             gameTableView->SelectAndScrollToCellWithIdx(0); // only invokes callback if selection has changed
                     } else
-                        collectionController->SetDataForLevelCollection(nullptr, !selectionCoordinator->get_hidePracticeButton(), selectionCoordinator->get_actionButtonText(), navigationController->emptyCustomSongListInfoPrefab);
+                        collectionController->SetDataForLevelCollection(nullptr, !selectionCoordinator->get_hidePracticeButton(), selectionCoordinator->get_actionButtonText(), navigationController->_emptyCustomSongListInfoPrefab, false);
                 // update level search controller - favorites or regular search - if open
-                } else if(navigationController->selectLevelCategoryViewController->get_selectedLevelCategory() != SelectLevelCategoryViewController::LevelCategory::MusicPacks)
-                    navigationController->levelSearchViewController->UpdateBeatmapLevelPackCollectionAsync();
+                } else if(navigationController->_selectLevelCategoryViewController->get_selectedLevelCategory() != SelectLevelCategoryViewController::LevelCategory::MusicPacks)
+                    navigationController->_levelSearchViewController->RefreshAsync();
             }
         }
 
@@ -234,16 +230,16 @@ namespace PlaylistCore {
             LOG_INFO("SelectionState get");
             SelectionState state{};
             auto gridView = FindComponent<GlobalNamespace::AnnotatedBeatmapLevelCollectionsGridView*>();
-            auto listIdx = gridView->selectedCellIndex;
+            auto listIdx = gridView->_selectedCellIndex;
             // virtual methods T_T
-            auto pack = ArrayW<GlobalNamespace::IBeatmapLevelPack*>(gridView->annotatedBeatmapLevelCollections)[listIdx];
-            state.selectedPlaylist = GetPlaylistWithPrefix(pack->get_packID());
+            auto pack = gridView->_annotatedBeatmapLevelCollections->get_Item(listIdx);
+            state.selectedPlaylist = GetPlaylistWithPrefix(pack->packID);
             state.selectedPlaylistIdx = listIdx;
             auto levelsView = FindComponent<GlobalNamespace::LevelCollectionTableView*>();
-            state.selectedSong = levelsView->selectedPreviewBeatmapLevel;
-            state.selectedSongIdx = levelsView->selectedRow;
-            // the SelectLevelPackHeaderCell method doesn't update selectedPreviewBeatmapLevel
-            if(levelsView->selectedRow == 0)
+            state.selectedSong = levelsView->_selectedBeatmapLevel;
+            state.selectedSongIdx = levelsView->_selectedRow;
+            // the SelectLevelPackHeaderCell method doesn't update selectedBeatmapLevel
+            if(levelsView->_selectedRow == 0)
                 state.selectedSong = nullptr;
             return state;
         }
@@ -254,8 +250,8 @@ namespace PlaylistCore {
             if(state.selectedPlaylistIdx >= gridView->GetNumberOfCells())
                 return;
             // virtual methods T_T
-            auto pack = ArrayW<GlobalNamespace::IBeatmapLevelPack*>(gridView->annotatedBeatmapLevelCollections)[state.selectedPlaylistIdx];
-            if(GetPlaylistWithPrefix(pack->get_packID()) != state.selectedPlaylist)
+            auto pack = ArrayW<GlobalNamespace::BeatmapLevelPack*>(gridView->_annotatedBeatmapLevelCollections)[state.selectedPlaylistIdx];
+            if(GetPlaylistWithPrefix(pack->packID) != state.selectedPlaylist)
                 return;
             gridView->SelectAndScrollToCellWithIdx(state.selectedPlaylistIdx);
             auto levelsView = FindComponent<GlobalNamespace::LevelCollectionTableView*>();
@@ -268,7 +264,7 @@ namespace PlaylistCore {
 
         void ReloadSongsKeepingSelection(std::function<void()> finishCallback) {
             auto state = GetSelectionState();
-            auto callback = [state, finishCallback](std::vector<GlobalNamespace::CustomPreviewBeatmapLevel*> const& _) {
+            auto callback = [state, finishCallback](std::vector<GlobalNamespace::BeatmapLevel*> const& _) {
                 SetSelectionState(state);
                 if(finishCallback)
                     finishCallback();

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "UnityEngine/Texture2D.hpp"
-#include "GlobalNamespace/IPreviewBeatmapLevel.hpp"
-#include "GlobalNamespace/IBeatmapLevelPack.hpp"
+#include "GlobalNamespace/BeatmapLevel.hpp"
+#include "GlobalNamespace/BeatmapLevelPack.hpp"
 
 namespace PlaylistCore {
     class Playlist;
@@ -12,13 +12,13 @@ namespace PlaylistCore {
         struct SelectionState {
             PlaylistCore::Playlist* selectedPlaylist;
             int selectedPlaylistIdx;
-            GlobalNamespace::IPreviewBeatmapLevel* selectedSong;
+            GlobalNamespace::BeatmapLevel* selectedSong;
             int selectedSongIdx;
         };
 
-        std::string GetLevelHash(GlobalNamespace::IPreviewBeatmapLevel* level);
+        std::string GetLevelHash(GlobalNamespace::BeatmapLevel* level);
 
-        bool IsWipLevel(GlobalNamespace::IPreviewBeatmapLevel* level);
+        bool IsWipLevel(GlobalNamespace::BeatmapLevel* level);
 
         void RemoveAllBMBFSuffixes();
 
@@ -36,9 +36,9 @@ namespace PlaylistCore {
 
         void WriteImageToFile(std::string_view pathToPng, UnityEngine::Texture2D* texture);
 
-        List<GlobalNamespace::IBeatmapLevelPack*>* GetCustomPacks();
+        List<GlobalNamespace::BeatmapLevelPack*>* GetCustomPacks();
 
-        void SetCustomPacks(List<GlobalNamespace::IBeatmapLevelPack*>* newPlaylists, bool updateSongs);
+        void SetCustomPacks(List<GlobalNamespace::BeatmapLevelPack*>* newPlaylists, bool updateSongs);
 
         SelectionState GetSelectionState();
 

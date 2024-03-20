@@ -4,7 +4,7 @@
   "info": {
     "name": "PlaylistCore",
     "id": "playlistcore",
-    "version": "1.2.1",
+    "version": "1.3.0",
     "url": "https://github.com/Metalit/PlaylistCore",
     "additionalData": {
       "overrideSoName": "libplaylistcore.so"
@@ -13,7 +13,7 @@
   "dependencies": [
     {
       "id": "beatsaber-hook",
-      "versionRange": "^3.14.0",
+      "versionRange": "^5.0.9",
       "additionalData": {
         "extraFiles": [
           "src/inline-hook"
@@ -21,58 +21,44 @@
       }
     },
     {
-      "id": "codegen",
-      "versionRange": "^0.33.0",
+      "id": "bs-cordl",
+      "versionRange": "^3500.0.0",
       "additionalData": {}
     },
     {
-      "id": "questui",
-      "versionRange": "^0.17.8",
+      "id": "bsml",
+      "versionRange": "^0.5.0",
       "additionalData": {
         "private": true
       }
     },
     {
       "id": "custom-types",
-      "versionRange": "^0.15.22",
+      "versionRange": "^0.16.18",
       "additionalData": {
         "private": true
       }
     },
     {
       "id": "songloader",
-      "versionRange": "^0.10.11",
+      "versionRange": "^0.11.2",
       "additionalData": {}
     },
     {
-      "id": "songdownloader",
-      "versionRange": "^0.6.0",
-      "additionalData": {
-        "private": true
-      }
-    },
-    {
-      "id": "modloader",
-      "versionRange": "^1.2.3",
+      "id": "scotland2",
+      "versionRange": "*",
       "additionalData": {
         "private": true
       }
     },
     {
       "id": "rapidjson-macros",
-      "versionRange": "^1.0.0",
+      "versionRange": "*",
       "additionalData": {}
     },
     {
-      "id": "bsml",
-      "versionRange": "^0.3.0",
-      "additionalData": {
-        "private": true
-      }
-    },
-    {
       "id": "config-utils",
-      "versionRange": "^1.1.0",
+      "versionRange": "*",
       "additionalData": {}
     }
   ],
