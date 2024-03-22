@@ -9,7 +9,6 @@
 #include "SpriteCache.hpp"
 #include "Settings.hpp"
 #include "Utils.hpp"
-#include "Backup.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -52,7 +51,7 @@ namespace PlaylistCore {
     std::vector<std::pair<modloader::ModInfo, std::function<bool(std::string const& path)>>> playlistFilters;
 
     void Playlist::Save() {
-        if(!WriteToFile(path, playlistJSON) || !WriteToFile(GetPlaylistBackupPath(path), playlistJSON))
+        if(!WriteToFile(path, playlistJSON))
             LOG_ERROR("Error saving playlist! Path: {}", path);
     }
 
@@ -220,12 +219,6 @@ namespace PlaylistCore {
         LOG_INFO("Loading playlists");
         RemoveAllBMBFSuffixes();
         LoadCoverImages(); // can be laggy depending on the number of images, but generally only loads a lot on launch when the screen is black anyway
-        if(auto func = GetBackupFunction()) {
-            LOG_INFO("Showing backup dialog");
-            ShowBackupDialog(func);
-            hasLoaded = true;
-            return;
-        }
         // clear playlists if requested
         if(fullReload) {
             for(auto& pair : path_playlists)
@@ -441,8 +434,6 @@ namespace PlaylistCore {
         // save playlist
         std::string path = GetNewPlaylistPath(title);
         WriteToFile(path, newPlaylist);
-        // update backups
-        WriteToFile(GetPlaylistBackupPath(path), newPlaylist);
         return path;
     }
 
@@ -450,8 +441,6 @@ namespace PlaylistCore {
         // save playlist
         std::string path = GetNewPlaylistPath(playlist.PlaylistTitle);
         WriteToFile(path, playlist);
-        // update backups
-        WriteToFile(GetPlaylistBackupPath(path), playlist);
         Playlist* ret = nullptr;
         if (reloadPlaylists) {
             ReloadPlaylists();
@@ -520,7 +509,6 @@ namespace PlaylistCore {
         path_playlists.erase(path_iter);
         // delete file
         std::filesystem::remove(playlist->path);
-        std::filesystem::remove(GetPlaylistBackupPath(playlist->path));
         // remove name from order config
         int orderIndex = GetPlaylistIndex(playlist->path);
         auto orderVec = getConfig().Order.GetValue();

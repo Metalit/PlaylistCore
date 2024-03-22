@@ -18,6 +18,5 @@ static constexpr auto logger = Paper::ConstLoggerContext(MOD_ID);
 #define CustomWIPLevelsPackID CustomLevelPackPrefixID "CustomWIPLevels"
 
 std::string GetPlaylistsPath();
-std::string GetBackupsPath();
 std::string GetConfigPath();
 std::string GetCoversPath();

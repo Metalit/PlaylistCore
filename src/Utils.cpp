@@ -99,13 +99,6 @@ namespace PlaylistCore {
             return GetPlaylistsPath() + "/" + fileTitle + ".bplist_BMBF.json";
         }
 
-        std::string GetPlaylistBackupPath(std::string_view path) {
-            if(!path.starts_with(GetPlaylistsPath()))
-                return "";
-            std::string_view suffix = path.substr(GetPlaylistsPath().length());
-            return GetBackupsPath() + suffix.data();
-        }
-
         std::string GetBase64ImageType(std::string_view base64) {
             if(base64.length() < 3)
                 return "unknown";

@@ -19,8 +19,6 @@ namespace PlaylistCore {
 
         std::string GetNewPlaylistPath(std::string_view title);
 
-        std::string GetPlaylistBackupPath(std::string_view path);
-
         std::string GetBase64ImageType(std::string_view base64);
 
         std::string ProcessImage(UnityEngine::Texture2D* texture, bool returnPngString);

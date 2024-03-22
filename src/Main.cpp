@@ -74,11 +74,6 @@ std::string GetPlaylistsPath() {
     return playlistsPath;
 }
 
-std::string GetBackupsPath() {
-    static std::string backupsPath(getDataDir(managerModInfo) + "PlaylistBackups");
-    return backupsPath;
-}
-
 std::string GetCoversPath() {
     static std::string coversPath(getDataDir(managerModInfo) + "Covers");
     return coversPath;
@@ -250,10 +245,6 @@ extern "C" void setup(CModInfo* info) {
         mkpath(playlistsPath);
 
     LOG_INFO("{}", playlistsPath);
-
-    auto backupsPath = GetBackupsPath();
-    if(!direxists(backupsPath))
-        mkpath(backupsPath);
 
     auto coversPath = GetCoversPath();
     if(!direxists(coversPath))
