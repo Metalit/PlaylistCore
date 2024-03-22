@@ -25,7 +25,7 @@ struct SimpleSafePtr {
             internalWrapper->internalPointer = other;
         return *this;
     }
-    
+
     T& operator *() {
         NULL_CHECK(internalWrapper, *internalWrapper->internalPointer);
     }
@@ -41,7 +41,7 @@ struct SimpleSafePtr {
     operator T* const() const {
         NULL_CHECK(internalWrapper, internalWrapper->internalPointer);
     }
-    
+
     operator bool() const noexcept {
         if(!internalWrapper)
             return false;

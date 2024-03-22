@@ -12,7 +12,7 @@
 #include "beatsaber-hook/shared/config/config-utils.hpp"
 #include "beatsaber-hook/shared/utils/hooking.hpp"
 
-#include "songloader/shared/API.hpp"
+#include "songcore/shared/SongCore.hpp"
 
 #include "bsml/shared/BSML.hpp"
 
@@ -69,11 +69,6 @@ modloader::ModInfo managerModInfo = {"PlaylistManager", VERSION, 0};
 
 bool hasManager;
 
-Logger& getLogger() {
-    static auto logger = new Logger(modInfo, LoggerOptions(false, true));
-    return *logger;
-}
-
 std::string GetPlaylistsPath() {
     static std::string playlistsPath(getDataDir(managerModInfo) + "Playlists");
     return playlistsPath;
@@ -91,7 +86,7 @@ std::string GetCoversPath() {
 
 // override header cell behavior and change no data prefab
 MAKE_HOOK_MATCH(LevelCollectionViewController_SetData, &LevelCollectionViewController::SetData,
-        void, LevelCollectionViewController* self, ArrayW<GlobalNamespace::BeatmapLevel*> beatmapLevels, StringW headerText, UnityEngine::Sprite* headerSprite, bool sortLevels, bool sortPreviewBeatmapLevels, UnityEngine::GameObject* noDataInfoPrefab) {
+        void, LevelCollectionViewController* self, ArrayW<BeatmapLevel*> beatmapLevels, StringW headerText, UnityEngine::Sprite* headerSprite, bool sortLevels, bool sortPreviewBeatmapLevels, UnityEngine::GameObject* noDataInfoPrefab) {
     // only check for null strings, not empty
     // string will be null for level collections but not level packs
     self->_showHeader = (bool) headerText;
@@ -104,10 +99,10 @@ MAKE_HOOK_MATCH(LevelCollectionViewController_SetData, &LevelCollectionViewContr
     // also override check for empty collection
     if(beatmapLevels ) {
         self->_levelCollectionTableView->get_gameObject()->SetActive(true);
-        self->_levelCollectionTableView->SetData(reinterpret_cast<System::Collections::Generic::IReadOnlyList_1<GlobalNamespace::BeatmapLevel*>*>(beatmapLevels.convert()), self->_playerDataModel->playerData->favoritesLevelIds, sortLevels, sortPreviewBeatmapLevels);
+        self->_levelCollectionTableView->SetData(reinterpret_cast<System::Collections::Generic::IReadOnlyList_1<BeatmapLevel*>*>(beatmapLevels.convert()), self->_playerDataModel->playerData->favoritesLevelIds, sortLevels, sortPreviewBeatmapLevels);
         self->_levelCollectionTableView->RefreshLevelsAvailability();
     } else {
-        self->_levelCollectionTableView->SetData(ListW<GlobalNamespace::BeatmapLevel*>::New()->i___System__Collections__Generic__IReadOnlyList_1_T_(), self->_playerDataModel->playerData->favoritesLevelIds, sortLevels, sortPreviewBeatmapLevels);
+        self->_levelCollectionTableView->SetData(ListW<BeatmapLevel*>::New()->i___System__Collections__Generic__IReadOnlyList_1_T_(), self->_playerDataModel->playerData->favoritesLevelIds, sortLevels, sortPreviewBeatmapLevels);
         if(noDataInfoPrefab)
             self->_noDataInfoGO = self->_container->InstantiatePrefab(noDataInfoPrefab, self->_noDataInfoContainer);
         // change no custom songs text if playlists exist
@@ -134,7 +129,7 @@ MAKE_HOOK_MATCH(AnnotatedBeatmapLevelCollectionsGridView_OnEnable, &AnnotatedBea
     self->_pageControl->_content->get_gameObject()->SetActive(false);
     auto content = self->_animator->_contentTransform;
     content->set_anchoredPosition({0, content->get_anchoredPosition().y});
-    
+
     AnnotatedBeatmapLevelCollectionsGridView_OnEnable(self);
 
     if(!self->GetComponent<Scroller*>())
@@ -144,21 +139,21 @@ MAKE_HOOK_MATCH(AnnotatedBeatmapLevelCollectionsGridView_OnEnable, &AnnotatedBea
 // make the playlist opening animation work better with the playlist scroller
 MAKE_HOOK_MATCH(AnnotatedBeatmapLevelCollectionsGridViewAnimator_AnimateOpen, &AnnotatedBeatmapLevelCollectionsGridViewAnimator::AnimateOpen,
         void, AnnotatedBeatmapLevelCollectionsGridViewAnimator* self, bool animated) {
-    
+
     // store actual values to avoid breaking things when closing
     int rowCount = self->_rowCount;
     int selectedRow = self->_selectedRow;
-    
+
     // lock height to specific value
     self->_rowCount = 5;
     self->_selectedRow = 0;
 
     AnnotatedBeatmapLevelCollectionsGridViewAnimator_AnimateOpen(self, animated);
-    
+
     // prevent modification of content transform as it overrides the scroll view
     Tweening::Vector2Tween::getStaticF_Pool()->Despawn(self->_contentPositionTween);
     self->_contentPositionTween = nullptr;
-    
+
     self->_rowCount = rowCount;
     self->_selectedRow = selectedRow;
 }
@@ -176,7 +171,7 @@ MAKE_HOOK_MATCH(AnnotatedBeatmapLevelCollectionsGridViewAnimator_ScrollToRowIdxI
 // prevent download icon showing up on empty custom playlists unless manager is changing the behavior
 MAKE_HOOK_MATCH(AnnotatedBeatmapLevelCollectionCell_RefreshAvailabilityAsync, &AnnotatedBeatmapLevelCollectionCell::RefreshAvailabilityAsync,
         void, AnnotatedBeatmapLevelCollectionCell* self, IEntitlementModel* entitlementModel) {
-    
+
     AnnotatedBeatmapLevelCollectionCell_RefreshAvailabilityAsync(self, entitlementModel);
 
     if(hasManager)
@@ -203,7 +198,7 @@ MAKE_HOOK_MATCH(MenuTransitionsHelper_RestartGame, &MenuTransitionsHelper::Resta
     hasLoaded = false;
 
     MenuTransitionsHelper_RestartGame(self, finishCallback);
-    
+
     ResettableStaticPtr::resetAll();
 }
 
@@ -249,17 +244,17 @@ extern "C" void setup(CModInfo* info) {
     info->id = "PlaylistCore";
     info->version = VERSION;
     info->version_long = 0;
-    
+
     auto playlistsPath = GetPlaylistsPath();
     if(!direxists(playlistsPath))
         mkpath(playlistsPath);
-    
-    LOG_INFO("%s", playlistsPath.c_str());
-    
+
+    LOG_INFO("{}", playlistsPath);
+
     auto backupsPath = GetBackupsPath();
     if(!direxists(backupsPath))
         mkpath(backupsPath);
-    
+
     auto coversPath = GetCoversPath();
     if(!direxists(coversPath))
         mkpath(coversPath);
@@ -271,26 +266,27 @@ extern "C" void late_load() {
     LOG_INFO("Starting PlaylistCore installation...");
     il2cpp_functions::Init();
     custom_types::Register::AutoRegister();
-    
+
     BSML::Init();
-    BSML::Register::RegisterMenuButton("Reload Playlists", "Reloads all playlists!", []{ RuntimeSongLoader::API::RefreshSongs(false); });
+    BSML::Register::RegisterMenuButton("Reload Playlists", "Reloads all playlists!", []{ SongCore::API::Loading::RefreshLevelPacks(); });
     BSML::Register::RegisterSettingsMenu<SettingsViewController*>("Playlist Core");
 
-    hasManager = modloader_require_mod(new CModInfo("PlaylistManager", VERSION, 0), CMatchType::MatchType_IdOnly);
+    auto managerCInfo = managerModInfo.to_c();
+    hasManager = modloader_require_mod(&managerCInfo, CMatchType::MatchType_IdOnly);
 
-    INSTALL_HOOK_ORIG(getLogger(), LevelCollectionViewController_SetData);
-    INSTALL_HOOK(getLogger(), AnnotatedBeatmapLevelCollectionsGridView_OnEnable);
-    INSTALL_HOOK(getLogger(), AnnotatedBeatmapLevelCollectionsGridViewAnimator_AnimateOpen);
-    INSTALL_HOOK(getLogger(), AnnotatedBeatmapLevelCollectionsGridViewAnimator_ScrollToRowIdxInstant);
-    INSTALL_HOOK(getLogger(), AnnotatedBeatmapLevelCollectionCell_RefreshAvailabilityAsync);
-    INSTALL_HOOK(getLogger(), MenuTransitionsHelper_RestartGame);
-    INSTALL_HOOK_ORIG(getLogger(), LevelCollectionNavigationController_DidActivate);
-    
-    RuntimeSongLoader::API::AddRefreshLevelPacksEvent(
-        [] (RuntimeSongLoader::SongLoaderBeatmapLevelsRepository* customBeatmapLevelsRepository) {
+    INSTALL_HOOK_ORIG(logger, LevelCollectionViewController_SetData);
+    INSTALL_HOOK(logger, AnnotatedBeatmapLevelCollectionsGridView_OnEnable);
+    INSTALL_HOOK(logger, AnnotatedBeatmapLevelCollectionsGridViewAnimator_AnimateOpen);
+    INSTALL_HOOK(logger, AnnotatedBeatmapLevelCollectionsGridViewAnimator_ScrollToRowIdxInstant);
+    INSTALL_HOOK(logger, AnnotatedBeatmapLevelCollectionCell_RefreshAvailabilityAsync);
+    INSTALL_HOOK(logger, MenuTransitionsHelper_RestartGame);
+    INSTALL_HOOK_ORIG(logger, LevelCollectionNavigationController_DidActivate);
+
+    SongCore::API::Loading::GetCustomLevelPacksWillRefreshEvent().addCallback(
+        [](SongCore::SongLoader::CustomBeatmapLevelsRepository* customBeatmapLevelsRepository) {
             LoadPlaylists(customBeatmapLevelsRepository, true);
         }
     );
-        
+
     LOG_INFO("Successfully installed PlaylistCore!");
 }

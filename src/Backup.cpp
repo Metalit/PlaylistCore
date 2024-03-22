@@ -295,7 +295,7 @@ custom_types::Helpers::Coroutine ShowBackupDialogCoroutine() {
     auto mainViewController = FindComponent<GlobalNamespace::MainMenuViewController*>();
     while(!mainViewController->wasActivatedBefore)
         co_yield nullptr;
-    
+
     STATIC_AUTO(modal, MakeDialog());
     modal->Show(true, true, nullptr);
 }

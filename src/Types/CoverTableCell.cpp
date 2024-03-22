@@ -20,7 +20,7 @@ void CoverTableCell::ctor() {
     auto thisref = this;
     static auto info = il2cpp_utils::FindMethodUnsafe(classof(HMUI::TableCell*), ".ctor", 0);
     il2cpp_utils::RunMethodRethrow(thisref, info);
-    
+
     refreshVisualsFunc = [this](){ refreshVisuals(); };
     initFunc = [this](UnityEngine::Sprite* sprite, std::string text){ init(sprite, text); };
     setSpriteFunc = [this](UnityEngine::Sprite* sprite){ setSprite(sprite); };

@@ -3,7 +3,7 @@
 #include "PlaylistCore.hpp"
 #include "ResettableStaticPtr.hpp"
 
-#include "songloader/shared/API.hpp"
+#include "songcore/shared/SongCore.hpp"
 
 #include "UnityEngine/ImageConversion.hpp"
 #include "UnityEngine/GameObject.hpp"
@@ -166,7 +166,6 @@ namespace PlaylistCore {
         void SetCustomPacks(List<GlobalNamespace::BeatmapLevelPack*>* newPlaylists, bool updateSongs) {
             using namespace GlobalNamespace;
             auto packList = ListW<GlobalNamespace::BeatmapLevelPack*>(newPlaylists);
-            auto packArray = packList.to_array();
             // more virtual pain
             // auto packReadOnly = (System::Collections::Generic::IReadOnlyList_1<IAnnotatedBeatmapLevelCollection*>*) newPlaylists->AsReadOnly();
             // update in levels model to avoid resetting
@@ -198,13 +197,13 @@ namespace PlaylistCore {
                 // concatenate arrays together
                 auto arr1 = navigationController->_ostBeatmapLevelPacks;
                 auto arr2 = navigationController->_musicPacksBeatmapLevelPacks;
-                ArrayW<BeatmapLevelPack*> newAllPacks(arr1.size() + arr2.size() + packArray.size());
+                ArrayW<BeatmapLevelPack*> newAllPacks(arr1.size() + arr2.size() + packList.size());
                 for(int i = 0; i < arr1.size(); i++)
                     newAllPacks[i] = arr1[i];
                 for(int i = 0; i < arr2.size(); i++)
                     newAllPacks[i + arr1.size()] = arr2[i];
-                for(int i = 0; i < packArray.size(); i++)
-                    newAllPacks[i + arr1.size() + arr2.size()] = packArray[i];
+                for(int i = 0; i < packList.size(); i++)
+                    newAllPacks[i + arr1.size() + arr2.size()] = packList[i];
                 navigationController->_allBeatmapLevelPacks = newAllPacks;
                 // update the levels shown in the search view controller
                 navigationController->_levelSearchViewController->Setup(newAllPacks);
@@ -212,10 +211,10 @@ namespace PlaylistCore {
                 if(navigationController->_selectLevelCategoryViewController->get_selectedLevelCategory() == SelectLevelCategoryViewController::LevelCategory::CustomSongs) {
                     auto selectionCoordinator = FindComponent<LevelSelectionFlowCoordinator*>();
                     auto collectionController = FindComponent<LevelCollectionNavigationController*>();
-                    if(packArray.size() > 0) {
+                    if(packList.size() > 0) {
                         // select cell with index 0 and invoke callback
                         if(gameTableView->_selectedCellIndex == 0)
-                            collectionController->SetDataForPack(packArray->First(), true, !selectionCoordinator->get_hidePracticeButton(), selectionCoordinator->get_actionButtonText(), false); // skip to top of callback chain
+                            collectionController->SetDataForPack(packList[0], true, !selectionCoordinator->get_hidePracticeButton(), selectionCoordinator->get_actionButtonText(), false); // skip to top of callback chain
                         else
                             gameTableView->SelectAndScrollToCellWithIdx(0); // only invokes callback if selection has changed
                     } else
@@ -224,58 +223,6 @@ namespace PlaylistCore {
                 } else if(navigationController->_selectLevelCategoryViewController->get_selectedLevelCategory() != SelectLevelCategoryViewController::LevelCategory::MusicPacks)
                     navigationController->_levelSearchViewController->RefreshAsync();
             }
-        }
-
-        SelectionState GetSelectionState() {
-            LOG_INFO("SelectionState get");
-            SelectionState state{};
-            auto gridView = FindComponent<GlobalNamespace::AnnotatedBeatmapLevelCollectionsGridView*>();
-            auto listIdx = gridView->_selectedCellIndex;
-            // virtual methods T_T
-            auto pack = gridView->_annotatedBeatmapLevelCollections->get_Item(listIdx);
-            state.selectedPlaylist = GetPlaylistWithPrefix(pack->packID);
-            state.selectedPlaylistIdx = listIdx;
-            auto levelsView = FindComponent<GlobalNamespace::LevelCollectionTableView*>();
-            state.selectedSong = levelsView->_selectedBeatmapLevel;
-            state.selectedSongIdx = levelsView->_selectedRow;
-            // the SelectLevelPackHeaderCell method doesn't update selectedBeatmapLevel
-            if(levelsView->_selectedRow == 0)
-                state.selectedSong = nullptr;
-            return state;
-        }
-
-        void SetSelectionState(const SelectionState& state) {
-            LOG_INFO("SelectionState set");
-            auto gridView = FindComponent<GlobalNamespace::AnnotatedBeatmapLevelCollectionsGridView*>();
-            if(state.selectedPlaylistIdx >= gridView->GetNumberOfCells())
-                return;
-            // virtual methods T_T
-            auto pack = ArrayW<GlobalNamespace::BeatmapLevelPack*>(gridView->_annotatedBeatmapLevelCollections)[state.selectedPlaylistIdx];
-            if(GetPlaylistWithPrefix(pack->packID) != state.selectedPlaylist)
-                return;
-            gridView->SelectAndScrollToCellWithIdx(state.selectedPlaylistIdx);
-            auto levelsView = FindComponent<GlobalNamespace::LevelCollectionTableView*>();
-            // checks for and finds song itself
-            if(state.selectedSong)
-                levelsView->SelectLevel(state.selectedSong);
-            else
-                levelsView->SelectLevelPackHeaderCell();
-        }
-
-        void ReloadSongsKeepingSelection(std::function<void()> finishCallback) {
-            auto state = GetSelectionState();
-            auto callback = [state, finishCallback](std::vector<GlobalNamespace::BeatmapLevel*> const& _) {
-                SetSelectionState(state);
-                if(finishCallback)
-                    finishCallback();
-            };
-            RuntimeSongLoader::API::RefreshSongs(false, callback);
-        }
-
-        void ReloadPlaylistsKeepingSelection() {
-            auto state = GetSelectionState();
-            ReloadPlaylists();
-            SetSelectionState(state);
         }
     }
 }

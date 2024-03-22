@@ -5,16 +5,7 @@
 #include "GlobalNamespace/BeatmapLevelPack.hpp"
 
 namespace PlaylistCore {
-    class Playlist;
-
     namespace Utils {
-
-        struct SelectionState {
-            PlaylistCore::Playlist* selectedPlaylist;
-            int selectedPlaylistIdx;
-            GlobalNamespace::BeatmapLevel* selectedSong;
-            int selectedSongIdx;
-        };
 
         std::string GetLevelHash(GlobalNamespace::BeatmapLevel* level);
 
@@ -39,13 +30,5 @@ namespace PlaylistCore {
         List<GlobalNamespace::BeatmapLevelPack*>* GetCustomPacks();
 
         void SetCustomPacks(List<GlobalNamespace::BeatmapLevelPack*>* newPlaylists, bool updateSongs);
-
-        SelectionState GetSelectionState();
-
-        void SetSelectionState(const SelectionState& state);
-
-        void ReloadSongsKeepingSelection(std::function<void()> finishCallback = nullptr);
-
-        void ReloadPlaylistsKeepingSelection();
     }
 }

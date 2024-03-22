@@ -20,7 +20,8 @@
 
 DEFINE_TYPE(PlaylistCore, Scroller);
 
-#define ACTION_1(type, methodname) custom_types::MakeDelegate<System::Action_1<type>*>((std::function<void(type)>) [this](type arg){if(this->cachedPtr == this) methodname(arg);})
+#define ACTION_1(type, methodname) \
+    custom_types::MakeDelegate<System::Action_1<type>*>((std::function<void(type)>) [this](type arg) { if(this->cachedPtr == this) methodname(arg); })
 
 using namespace PlaylistCore;
 
@@ -34,7 +35,7 @@ void Scroller::Awake() {
         eventListener = get_gameObject()->AddComponent<HMUI::EventSystemListener*>();
     eventListener->add_pointerDidEnterEvent(ACTION_1(UnityEngine::EventSystems::PointerEventData*, HandlePointerDidEnter));
     eventListener->add_pointerDidExitEvent(ACTION_1(UnityEngine::EventSystems::PointerEventData*, HandlePointerDidExit));
-    
+
     set_enabled(false);
 }
 
@@ -43,8 +44,7 @@ void Scroller::Update() {
         return;
     auto pos = contentTransform->get_anchoredPosition().y;
     float newPos = std::lerp(pos, destinationPos, UnityEngine::Time::get_deltaTime() * 8);
-    if (std::abs(newPos - destinationPos) < 0.01)
-    {
+    if(std::abs(newPos - destinationPos) < 0.01) {
         newPos = destinationPos;
         set_enabled(false);
     }

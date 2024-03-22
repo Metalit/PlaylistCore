@@ -10,9 +10,9 @@
 
 DECLARE_CLASS_CODEGEN(PlaylistCore, CustomTableCell, HMUI::TableCell,
 
-    DECLARE_OVERRIDE_METHOD(void, SelectionDidChange, il2cpp_utils::il2cpp_type_check::MetadataGetter<&HMUI::SelectableCell::SelectionDidChange>::methodInfo(), HMUI::SelectableCell::TransitionType transitionType);
-    DECLARE_OVERRIDE_METHOD(void, HighlightDidChange, il2cpp_utils::il2cpp_type_check::MetadataGetter<&HMUI::SelectableCell::HighlightDidChange>::methodInfo(), HMUI::SelectableCell::TransitionType transitionType);
-    
+    DECLARE_OVERRIDE_METHOD_MATCH(void, SelectionDidChange, &HMUI::SelectableCell::SelectionDidChange, HMUI::SelectableCell::TransitionType transitionType);
+    DECLARE_OVERRIDE_METHOD_MATCH(void, HighlightDidChange, &HMUI::SelectableCell::HighlightDidChange, HMUI::SelectableCell::TransitionType transitionType);
+
     protected:
     std::function<void()> refreshVisualsFunc;
     std::function<void(UnityEngine::Sprite*, std::string)> initFunc;
@@ -26,18 +26,18 @@ DECLARE_CLASS_CODEGEN(PlaylistCore, CustomTableCell, HMUI::TableCell,
     void setText(std::string text) { setTextFunc(text); }
 )
 
-___DECLARE_TYPE_WRAPPER_INHERITANCE(PlaylistCore, CustomListSource, Il2CppTypeEnum::IL2CPP_TYPE_CLASS, UnityEngine::MonoBehaviour, "PlaylistManager", { classof(HMUI::TableView::IDataSource*) }, 0, nullptr,
-    
+DECLARE_CLASS_CODEGEN_INTERFACES(PlaylistCore, CustomListSource, UnityEngine::MonoBehaviour, classof(HMUI::TableView::IDataSource*),
+
     DECLARE_INSTANCE_FIELD(Il2CppString*, reuseIdentifier);
     DECLARE_INSTANCE_FIELD(HMUI::TableView*, tableView);
 
     DECLARE_CTOR(ctor);
     DECLARE_DTOR(dtor);
 
-    DECLARE_OVERRIDE_METHOD(HMUI::TableCell*, CellForIdx, il2cpp_utils::il2cpp_type_check::MetadataGetter<&HMUI::TableView::IDataSource::CellForIdx>::methodInfo(), HMUI::TableView* tableView, int idx);
+    DECLARE_OVERRIDE_METHOD_MATCH(HMUI::TableCell*, CellForIdx, &HMUI::TableView::IDataSource::CellForIdx, HMUI::TableView* tableView, int idx);
 
-    DECLARE_OVERRIDE_METHOD(float, CellSize, il2cpp_utils::il2cpp_type_check::MetadataGetter<&HMUI::TableView::IDataSource::CellSize>::methodInfo());
-    DECLARE_OVERRIDE_METHOD(int, NumberOfCells, il2cpp_utils::il2cpp_type_check::MetadataGetter<&HMUI::TableView::IDataSource::NumberOfCells>::methodInfo());
+    DECLARE_OVERRIDE_METHOD_MATCH(float, CellSize, &HMUI::TableView::IDataSource::CellSize);
+    DECLARE_OVERRIDE_METHOD_MATCH(int, NumberOfCells, &HMUI::TableView::IDataSource::NumberOfCells);
 
     private:
     std::vector<UnityEngine::Sprite*> sprites;

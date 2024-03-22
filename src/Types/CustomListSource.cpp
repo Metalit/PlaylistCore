@@ -112,9 +112,12 @@ void CustomListSource::ScrollListLeft(CustomListSource* list, int numCells) {
     // both assume the table is vertical
     // int idx = tableView->get_scrolledRow();
     // idx -= tableView->get_scrollDistance();
-    int idx = std::min((int)(tableView->get_contentTransform()->get_anchoredPosition().x / tableView->get_cellSize())*-1, tableView->get_numberOfCells() - 1);
+    int idx = std::min(
+        (int)(tableView->get_contentTransform()->get_anchoredPosition().x / tableView->get_cellSize()) * -1,
+        tableView->get_numberOfCells() - 1
+    );
     idx -= numCells;
-    idx = idx > 0 ? idx : 0;
+    idx = std::max(idx, 0);
     tableView->ScrollToCellWithIdx(idx, HMUI::TableView::ScrollPositionType::Beginning, true);
 }
 
@@ -124,10 +127,13 @@ void CustomListSource::ScrollListRight(CustomListSource* list, int numCells) {
     // both assume the table is vertical
     // int idx = tableView->get_scrolledRow();
     // idx += tableView->get_scrollDistance();
-    int idx = std::min((int)(tableView->get_contentTransform()->get_anchoredPosition().x / tableView->get_cellSize())*-1, tableView->get_numberOfCells() - 1);
+    int idx = std::min(
+        (int)(tableView->get_contentTransform()->get_anchoredPosition().x / tableView->get_cellSize()) * -1,
+        tableView->get_numberOfCells() - 1
+    );
     idx += numCells;
     int max = tableView->get_dataSource()->NumberOfCells();
-    idx = idx < max ? idx : max - 1;
+    idx = std::min(idx, max - 1);
     tableView->ScrollToCellWithIdx(idx, HMUI::TableView::ScrollPositionType::Beginning, true);
 }
 

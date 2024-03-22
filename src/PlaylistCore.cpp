@@ -20,7 +20,7 @@
 
 #include "bsml/shared/BSML/MainThreadScheduler.hpp"
 
-#include "songloader/shared/API.hpp"
+#include "songcore/shared/SongCore.hpp"
 
 #include "System/Convert.hpp"
 #include "UnityEngine/Resources.hpp"
@@ -30,8 +30,10 @@
 #include "GlobalNamespace/CustomLevelLoader.hpp"
 #include "GlobalNamespace/BeatmapLevel.hpp"
 
-using namespace RuntimeSongLoader;
+using namespace SongCore;
+using namespace SongCore::SongLoader;
 using namespace PlaylistCore::Utils;
+using namespace GlobalNamespace;
 
 namespace PlaylistCore {
 
@@ -51,11 +53,15 @@ namespace PlaylistCore {
 
     void Playlist::Save() {
         if(!WriteToFile(path, playlistJSON) || !WriteToFile(GetPlaylistBackupPath(path), playlistJSON))
-            LOG_ERROR("Error saving playlist! Path: %s", path.c_str());
+            LOG_ERROR("Error saving playlist! Path: {}", path);
     }
 
     UnityEngine::Sprite* GetDefaultCoverImage() {
-        return BSML::Lite::ArrayToSprite(IncludedAssets::LevelPack_png);
+        if (auto ret = HasCachedSprite("default"))
+            return ret;
+        auto ret = BSML::Lite::ArrayToSprite(IncludedAssets::LevelPack_png);
+        CacheSprite(ret, "default");
+        return ret;
     }
 
     UnityEngine::Sprite* GetCoverImage(Playlist* playlist) {
@@ -82,16 +88,16 @@ namespace PlaylistCore {
             // check image type
             std::string imgType = GetBase64ImageType(imageBase64);
             if(imgType != ".png" && imgType != ".jpg") {
-                LOG_ERROR("Unsupported image type %s", imgType.c_str());
+                LOG_ERROR("Unsupported image type {}", imgType);
                 return GetDefaultCoverImage();
             }
             // get and write texture
             auto texture = UnityEngine::Texture2D::New_ctor(0, 0, UnityEngine::TextureFormat::RGBA32, false, false);
-            LOG_INFO("Loading image of playlist %s", playlist->name.c_str());
+            LOG_INFO("Loading image of playlist {}", playlist->name);
             try {
                 UnityEngine::ImageConversion::LoadImage(texture, System::Convert::FromBase64String(imageBase64)); // copy
             } catch (std::exception const& exc) {
-                LOG_DEBUG("Error loading image: %s", exc.what());
+                LOG_DEBUG("Error loading image: {}", exc.what());
                 return GetDefaultCoverImage();
             }
             // process texture size and png string and check hash for changes
@@ -110,7 +116,7 @@ namespace PlaylistCore {
             // save image as file with playlist file name and return
             std::string playlistPathName = std::filesystem::path(playlist->path).stem();
             std::string imgPath = GetCoversPath() + "/" + playlistPathName + ".png";
-            LOG_INFO("Writing image from playlist to %s", imgPath.c_str());
+            LOG_INFO("Writing image from playlist to {}", imgPath);
             WriteImageToFile(imgPath, texture);
             auto sprite = UnityEngine::Sprite::Create(texture, UnityEngine::Rect(0, 0, texture->get_width(), texture->get_height()), {0.5, 0.5}, 1024, 1, UnityEngine::SpriteMeshType::FullRect, {0, 0, 0, 0}, false);
             CacheSprite(sprite, std::move(newImageBase64));
@@ -161,7 +167,7 @@ namespace PlaylistCore {
                     std::filesystem::rename(path, newPath);
                     path = newPath;
                 } else if(extension != ".png") {
-                    LOG_ERROR("Incompatible file extension: %s", extension.c_str());
+                    LOG_ERROR("Incompatible file extension: {}", extension);
                     continue;
                 }
                 // check hash of base image before converting to sprite and to png
@@ -172,7 +178,7 @@ namespace PlaylistCore {
                 instream.read(reinterpret_cast<char*>(bytes->_values), size);
                 std::string imageString = System::Convert::ToBase64String(bytes);
                 if(HasCachedSprite(imageString)) {
-                    LOG_INFO("Skipping loading image %s", path.string().c_str());
+                    LOG_INFO("Skipping loading image {}", path.string());
                     continue;
                 }
                 // sanatize hash by converting to png
@@ -180,7 +186,7 @@ namespace PlaylistCore {
                 try {
                     UnityEngine::ImageConversion::LoadImage(texture, bytes);
                 } catch (std::exception const& exc) {
-                    LOG_DEBUG("Error loading image: %s", exc.what());
+                    LOG_DEBUG("Error loading image: {}", exc.what());
                     continue;
                 }
                 std::string newImageString = ProcessImage(texture, true);
@@ -188,7 +194,7 @@ namespace PlaylistCore {
                     WriteImageToFile(path.string(), texture);
                 // check hash with loaded images
                 if(HasCachedSprite(newImageString)) {
-                    LOG_INFO("Skipping loading image %s", path.string().c_str());
+                    LOG_INFO("Skipping loading image {}", path.string());
                     continue;
                 }
                 LOG_INFO("Loading image %s", path.string().c_str());
@@ -210,7 +216,7 @@ namespace PlaylistCore {
         ClearCachedSprites();
     }
 
-    void LoadPlaylists(SongLoaderBeatmapLevelsRepository* customBeatmapLevelPackCollectionSO, bool fullReload) {
+    void LoadPlaylists(CustomBeatmapLevelsRepository* customBeatmapLevelsRepository, bool fullReload) {
         LOG_INFO("Loading playlists");
         RemoveAllBMBFSuffixes();
         LoadCoverImages(); // can be laggy depending on the number of images, but generally only loads a lot on launch when the screen is black anyway
@@ -232,19 +238,8 @@ namespace PlaylistCore {
         // clear out old playlists if showDefaults is off
         if(!IsPlaylistShown("Defaults")) {
             LOG_INFO("Removing default playlists from being shown");
-            GlobalNamespace::BeatmapLevelPack *customsPack = nullptr, *customWIPsPack = nullptr;
-            for(auto& pack : customBeatmapLevelPackCollectionSO->customBeatmapLevelPacks->_items) {
-                if(!pack)
-                    continue;
-                if(pack->packName == "Custom Levels")
-                    customsPack = pack;
-                if(pack->packName == "WIP Levels")
-                    customWIPsPack = pack;
-            }
-            if(customsPack)
-                customBeatmapLevelPackCollectionSO->RemoveLevelPack(customsPack);
-            if(customWIPsPack)
-                customBeatmapLevelPackCollectionSO->RemoveLevelPack(customWIPsPack);
+            customBeatmapLevelsRepository->RemoveLevelPack(API::Loading::GetCustomLevelPack());
+            customBeatmapLevelsRepository->RemoveLevelPack(API::Loading::GetCustomWIPLevelPack());
         }
         // create set of playlists that aren't found when loading
         std::unordered_set<std::string> removedPaths{};
@@ -252,7 +247,7 @@ namespace PlaylistCore {
         for(auto& path : orderVec)
             removedPaths.insert(path);
         // create array for playlists
-        std::vector<GlobalNamespace::BeatmapLevelPack*> sortedPlaylists(orderVec.size());
+        std::vector<CustomLevelPack*> sortedPlaylists(orderVec.size());
         // iterate through all playlist files
         for(const auto& entry : std::filesystem::directory_iterator(path)) {
             if(!entry.is_directory()) {
@@ -264,7 +259,7 @@ namespace PlaylistCore {
                     playlist = path_iter->second;
                 // load from cache without reload
                 if(playlist && !needsReloadPlaylists.contains(playlist)) {
-                    LOG_INFO("Loading playlist file %s from cache", path.c_str());
+                    LOG_INFO("Loading playlist file {} from cache", path);
                     // check if playlist should be added
                     // check if playlist needs to be reloaded
                     if(IsPlaylistShown(playlist->path)) {
@@ -273,10 +268,10 @@ namespace PlaylistCore {
                         if(packPosition < 0)
                             sortedPlaylists.emplace_back(playlist->playlistCS);
                         else
-                            sortedPlaylists[packPosition] = (GlobalNamespace::BeatmapLevelPack*) playlist->playlistCS;
+                            sortedPlaylists[packPosition] = playlist->playlistCS;
                     }
                 } else {
-                    LOG_INFO("Loading playlist file %s", path.c_str());
+                    LOG_INFO("Loading playlist file {}", path);
                     // only create a new playlist if one doesn't exist
                     // if one does, its contents will simply be overwritten with the reloaded data
                     if(!playlist)
@@ -292,7 +287,7 @@ namespace PlaylistCore {
                         ReadFromFile(path, playlist->playlistJSON);
                         success = true;
                     } catch(const std::exception& err) {
-                        LOG_ERROR("Error loading playlist %s: %s", path.c_str(), err.what());
+                        LOG_ERROR("Error loading playlist {}: {}", path, err.what());
                         success = false;
                     }
                     if(success) {
@@ -300,13 +295,13 @@ namespace PlaylistCore {
                         playlist->path = path;
                         path_playlists.insert({playlist->path, playlist});
                         // create playlist object
-                        SongLoaderCustomBeatmapLevelPack* songloaderBeatmapLevelPack = SongLoaderCustomBeatmapLevelPack::Make_New(playlist->path, playlist->name, GetCoverImage(playlist));
-                        playlist->playlistCS = songloaderBeatmapLevelPack->CustomLevelsPack;
+                        CustomLevelPack* beatmapLevelPack = CustomLevelPack::New(playlist->path, playlist->name, GetCoverImage(playlist));
+                        playlist->playlistCS = beatmapLevelPack;
                         // clear out duplicate songs
                         auto& songs = playlist->playlistJSON.Songs;
                         std::unordered_set<std::string> hashes{};
                         // add all songs to the playlist object
-                        auto foundSongs = ListW<GlobalNamespace::BeatmapLevel*>::New();
+                        std::vector<BeatmapLevel*> foundSongs;
                         for(auto itr = songs.begin(); itr != songs.end(); itr++) {
                             LOWER(itr->Hash);
                             if(hashes.contains(itr->Hash)) {
@@ -314,22 +309,21 @@ namespace PlaylistCore {
                                 itr--;
                             } else {
                                 hashes.insert(itr->Hash);
-                                auto search = RuntimeSongLoader::API::GetLevelByHash(itr->Hash);
-                                if(search.has_value())
-                                    foundSongs->Add(search.value());
+                                if(auto search = API::Loading::GetLevelByHash(itr->Hash))
+                                    foundSongs.emplace_back(search);
                             }
                         }
                         // save removed duplicates
                         playlist->Save();
-                        songloaderBeatmapLevelPack->SetCustomBeatmapLevels(foundSongs->ToArray());
+                        beatmapLevelPack->SetLevels(foundSongs);
                         // add the playlist to the sorted array
                         if(IsPlaylistShown(playlist->path)) {
                             int packPosition = GetPlaylistIndex(playlist->path);
                             // add if new
                             if(packPosition < 0)
-                                sortedPlaylists.emplace_back(songloaderBeatmapLevelPack->CustomLevelsPack);
+                                sortedPlaylists.emplace_back(beatmapLevelPack);
                             else
-                                sortedPlaylists[packPosition] = songloaderBeatmapLevelPack->CustomLevelsPack;
+                                sortedPlaylists[packPosition] = beatmapLevelPack;
                         }
                     } else {
                         delete playlist;
@@ -342,9 +336,9 @@ namespace PlaylistCore {
             }
         }
         // add playlists to game in sorted order
-        for(auto customBeatmapLevelPack : sortedPlaylists) {
-            if(customBeatmapLevelPack)
-                customBeatmapLevelPackCollectionSO->AddLevelPack(customBeatmapLevelPack);
+        for(auto beatmapLevelPack : sortedPlaylists) {
+            if(beatmapLevelPack)
+                customBeatmapLevelsRepository->AddLevelPack(beatmapLevelPack);
         }
         // remove paths in order config that were not loaded
         for(auto& path : removedPaths) {
@@ -548,7 +542,7 @@ namespace PlaylistCore {
             for(auto& pair : path_playlists)
                 MarkPlaylistForReload(pair.second);
         }
-        API::RefreshPacks();
+        API::Loading::RefreshLevelPacks();
     }
 
     void MarkPlaylistForReload(Playlist* playlist) {
@@ -563,7 +557,7 @@ namespace PlaylistCore {
             bool hasSong = false;
             // search in songs in playlist instead of all songs
             // we need to treat the list as an array because it is initialized as an array elsewhere
-            ArrayW<GlobalNamespace::BeatmapLevel*> levelList(playlist->playlistCS->beatmapLevels);
+            ArrayW<BeatmapLevel*> levelList(playlist->playlistCS->beatmapLevels);
             for(int i = 0; i < levelList.size(); i++) {
                 if(hash == GetLevelHash(levelList[i])) {
                     hasSong = true;
@@ -581,36 +575,35 @@ namespace PlaylistCore {
         // store exisiting songs in a new vector to replace the song list with
         std::vector<BPSong> existingSongs = {};
         for(auto& song : playlist->playlistJSON.Songs) {
-            std::string& hash = song.Hash;
-            if(RuntimeSongLoader::API::GetLevelByHash(hash).has_value())
+            if(API::Loading::GetLevelByHash(song.Hash))
                 existingSongs.push_back(song);
             else if(song.SongName.has_value())
-                LOG_INFO("Removing song %s from playlist %s", song.SongName.value().c_str(), playlist->name.c_str());
+                LOG_INFO("Removing song {} from playlist {}", song.SongName.value(), playlist->name);
             else
-                LOG_INFO("Removing song with hash %s from playlist %s", hash.c_str(), playlist->name.c_str());
+                LOG_INFO("Removing song with hash {} from playlist {}", song.Hash, playlist->name);
         }
         // set the songs of the playlist to only those found
         playlist->playlistJSON.Songs = existingSongs;
         playlist->Save();
     }
 
-    void AddSongToPlaylist(Playlist* playlist, GlobalNamespace::BeatmapLevel* level) {
+    void AddSongToPlaylist(Playlist* playlist, BeatmapLevel* level) {
         if(!level)
             return;
         // add song to cs object
         auto& pack = playlist->playlistCS;
         if(!pack)
             return;
-        ArrayW<GlobalNamespace::BeatmapLevel*> levelList(pack->beatmapLevels);
-        ArrayW<GlobalNamespace::BeatmapLevel*> newLevels(levelList.size() + 1);
+        ArrayW<BeatmapLevel*> levelList(pack->beatmapLevels);
+        ArrayW<BeatmapLevel*> newLevels(levelList.size() + 1);
         for(int i = 0; i < levelList.size(); i++) {
             auto currentLevel = levelList[i];
-            if(currentLevel->levelID == level->levelID)
+            if(currentLevel->levelID->Equals(level->levelID))
                 return;
             newLevels[i] = currentLevel;
         }
         newLevels[levelList.size()] = level;
-        
+
         pack->beatmapLevels = newLevels;
         // update json object
         auto& json = playlist->playlistJSON;
@@ -624,33 +617,33 @@ namespace PlaylistCore {
         playlist->Save();
     }
 
-    void RemoveSongFromPlaylist(Playlist* playlist, GlobalNamespace::BeatmapLevel* level) {
+    void RemoveSongFromPlaylist(Playlist* playlist, BeatmapLevel* level) {
         if(!level)
             return;
         // remove song from cs object
         auto& pack = playlist->playlistCS;
         if(!pack)
             return;
-        ArrayW<GlobalNamespace::BeatmapLevel*> levelList(pack->beatmapLevels);
+        ArrayW<BeatmapLevel*> levelList(pack->beatmapLevels);
         if(levelList.size() == 0)
             return;
-        ArrayW<GlobalNamespace::BeatmapLevel*> newLevels(levelList.size() - 1);
+        ArrayW<BeatmapLevel*> newLevels(levelList.size() - 1);
         // remove only one level if duplicates
         bool removed = false;
         for(int i = 0; i < newLevels.size(); i++) {
             // comparison should work
             auto currentLevel = levelList[removed ? i + 1 : i];
-            if(currentLevel->levelID == level->levelID) {
+            if(currentLevel->levelID->Equals(level->levelID)) {
                 removed = true;
                 i--;
             } else
                 newLevels[i] = currentLevel;
         }
-        if(!removed && levelList->Last()->levelID != level->levelID) {
+        if(!removed && !levelList->Last()->levelID->Equals(level->levelID)) {
             LOG_ERROR("Could not find song to be removed!");
             return;
         }
-        
+
         pack->beatmapLevels = newLevels;
         // update json object
         auto& json = playlist->playlistJSON;
@@ -669,27 +662,27 @@ namespace PlaylistCore {
         playlist->Save();
     }
 
-    void RemoveSongFromAllPlaylists(GlobalNamespace::BeatmapLevel* level) {
+    void RemoveSongFromAllPlaylists(BeatmapLevel* level) {
         for(auto& pair : path_playlists)
             RemoveSongFromPlaylist(pair.second, level);
     }
 
-    void SetSongIndex(Playlist* playlist, GlobalNamespace::BeatmapLevel* level, int index) {
+    void SetSongIndex(Playlist* playlist, BeatmapLevel* level, int index) {
         if(!level)
             return;
         // remove song from cs object
         auto& pack = playlist->playlistCS;
         if(!pack)
             return;
-        ArrayW<GlobalNamespace::BeatmapLevel*> levelList(pack->beatmapLevels);
+        ArrayW<BeatmapLevel*> levelList(pack->beatmapLevels);
         if(index >= levelList.size() || index < 0)
             return;
-        ArrayW<GlobalNamespace::BeatmapLevel*> newLevels(levelList.size());
+        ArrayW<BeatmapLevel*> newLevels(levelList.size());
         bool found = false;
         // ensure we traverse the whole of both lists
         for(int i = 0, j = 0; i < newLevels.size() || j < levelList.size(); i++) {
             // skip past level in original list, but only the first time
-            if(j < levelList.size() && levelList[j]->levelID == level->levelID && !found) {
+            if(j < levelList.size() && levelList[j]->levelID->Equals(level->levelID) && !found) {
                 j++;
                 found = true;
             }

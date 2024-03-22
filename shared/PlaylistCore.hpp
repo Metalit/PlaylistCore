@@ -2,8 +2,8 @@
 
 #include "Types/BPList.hpp"
 #include "SimpleSafePtr.hpp"
-#include "songloader/shared/CustomTypes/SongLoaderBeatmapLevelsRepository.hpp"
-#include "songloader/shared/CustomTypes/SongLoaderCustomBeatmapLevelPack.hpp"
+#include "songcore/shared/SongLoader/CustomBeatmapLevelsRepository.hpp"
+#include "songcore/shared/SongLoader/CustomLevelPack.hpp"
 #include "GlobalNamespace/BeatmapLevel.hpp"
 #include "UnityEngine/Sprite.hpp"
 #include "UnityEngine/Texture2D.hpp"
@@ -13,7 +13,7 @@ namespace PlaylistCore {
     /// @brief A struct that wraps the data for a playlist
     struct Playlist {
         BPList playlistJSON;
-        SimpleSafePtr<GlobalNamespace::BeatmapLevelPack> playlistCS;
+        SimpleSafePtr<SongCore::SongLoader::CustomLevelPack> playlistCS;
         std::string name;
         std::string path;
         int imageIndex = -1;
@@ -49,7 +49,7 @@ namespace PlaylistCore {
     /// @brief Loads all playlists from the playlists folder, adding them to the collection
     /// @param customBeatmapLevelsRepository The level pack collection that the loaded playlists will be added to
     /// @param fullReload Whether to reload the contents of already loaded playlists
-    void LoadPlaylists(RuntimeSongLoader::SongLoaderBeatmapLevelsRepository* customBeatmapLevelsRepository, bool fullReload = false);
+    void LoadPlaylists(SongCore::SongLoader::CustomBeatmapLevelsRepository* customBeatmapLevelsRepository, bool fullReload = false);
 
     /// @brief Gets all playlists that are loaded
     /// @return A vector of all loaded playlists in order
