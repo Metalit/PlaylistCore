@@ -12,7 +12,7 @@ DECLARE_CLASS_CODEGEN(PlaylistCore, Scroller, UnityEngine::MonoBehaviour,
 
     private:
     Scroller* cachedPtr = nullptr;
-    bool addedDelegate = false, pointerHovered = false;
+    bool pointerHovered = false;
 
     DECLARE_INSTANCE_METHOD(void, Awake);
     DECLARE_INSTANCE_METHOD(void, Update);

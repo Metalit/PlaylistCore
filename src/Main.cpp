@@ -103,7 +103,7 @@ MAKE_HOOK_MATCH(LevelCollectionViewController_SetData, &LevelCollectionViewContr
         // change no custom songs text if playlists exist
         // because if they do then the only way to get here with that specific no data indicator is to have no playlists filtered
         static ConstString message("No playlists are contained in the filtering options selected.");
-        if(GetLoadedPlaylists().size() > 0 && noDataInfoPrefab == FindComponent<LevelFilteringNavigationController*>()->_emptyCustomSongListInfoPrefab.ptr())
+        if(GetLoadedPlaylists().size() > 0 && !SongCore::API::Loading::GetAllLevels().empty() && noDataInfoPrefab == FindComponent<LevelFilteringNavigationController*>()->_emptyCustomSongListInfoPrefab.ptr())
             self->_noDataInfoGO->GetComponentInChildren<TMPro::TextMeshProUGUI*>()->set_text(message);
         self->_levelCollectionTableView->get_gameObject()->SetActive(false);
     }
@@ -244,7 +244,7 @@ extern "C" void setup(CModInfo* info) {
     if(!direxists(playlistsPath))
         mkpath(playlistsPath);
 
-    LOG_INFO("{}", playlistsPath);
+    LOG_INFO("Playlist path is {}", playlistsPath);
 
     auto coversPath = GetCoversPath();
     if(!direxists(coversPath))

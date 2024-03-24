@@ -40,13 +40,19 @@ void Scroller::Awake() {
 }
 
 void Scroller::Update() {
-    if(!contentTransform)
+    if(!contentTransform || !platformHelper)
         return;
+	if (platformHelper->hasInputFocus) {
+		auto anyJoystickMaxAxis = platformHelper->GetAnyJoystickMaxAxis();
+		if (anyJoystickMaxAxis.sqrMagnitude > 0.01)
+			HandleJoystickWasNotCenteredThisFrame(anyJoystickMaxAxis);
+	}
     auto pos = contentTransform->get_anchoredPosition().y;
     float newPos = std::lerp(pos, destinationPos, UnityEngine::Time::get_deltaTime() * 8);
     if(std::abs(newPos - destinationPos) < 0.01) {
         newPos = destinationPos;
-        set_enabled(false);
+        if (!pointerHovered)
+            set_enabled(false);
     }
     contentTransform->set_anchoredPosition({0, newPos});
 }
@@ -63,10 +69,6 @@ void Scroller::Init(UnityEngine::RectTransform* content) {
 }
 
 void Scroller::HandlePointerDidEnter(UnityEngine::EventSystems::PointerEventData* pointerEventData) {
-    if(!addedDelegate) {
-        //platformHelper->add_joystickWasNotCenteredThisFrameEvent(ACTION_1(UnityEngine::Vector2, HandleJoystickWasNotCenteredThisFrame));
-        addedDelegate = true;
-    }
     pointerHovered = true;
     float pos = FindComponent<GlobalNamespace::AnnotatedBeatmapLevelCollectionsGridViewAnimator*>()->GetContentYOffset();
     SetDestinationPos(pos);

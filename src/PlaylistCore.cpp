@@ -288,7 +288,8 @@ namespace PlaylistCore {
                         playlist->path = path;
                         path_playlists.insert({playlist->path, playlist});
                         // create playlist object
-                        CustomLevelPack* beatmapLevelPack = CustomLevelPack::New(playlist->path, playlist->name, GetCoverImage(playlist));
+                        std::string id = "custom_levelPack_" + playlist->path;
+                        CustomLevelPack* beatmapLevelPack = CustomLevelPack::New(id, playlist->name, GetCoverImage(playlist));
                         playlist->playlistCS = beatmapLevelPack;
                         // clear out duplicate songs
                         auto& songs = playlist->playlistJSON.Songs;
