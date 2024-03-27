@@ -19,9 +19,14 @@ DEFINE_TYPE(PlaylistCore, SettingsViewController);
 
 using namespace PlaylistCore;
 
-void SettingsViewController::DidActivate(bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
+void FixButton(UnityEngine::UI::Button* button, UnityEngine::Vector2 size) {
+    if (auto layout = button->GetComponent<UnityEngine::UI::LayoutElement*>()) {
+        layout->set_preferredWidth(size.x);
+        layout->set_preferredHeight(size.y);
+    }
+}
 
-    using Vec = UnityEngine::Vector2;
+void SettingsViewController::DidActivate(bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
 
     if(!firstActivation)
         return;
@@ -31,20 +36,16 @@ void SettingsViewController::DidActivate(bool firstActivation, bool addedToHiera
     auto container = BSML::Lite::CreateScrollableSettingsContainer(this);
     auto parent = container->get_transform();
 
-    auto horizontal = BSML::Lite::CreateHorizontalLayoutGroup(parent);
-    horizontal->set_childControlWidth(false);
-    horizontal->set_childAlignment(UnityEngine::TextAnchor::MiddleCenter);
-    auto reloadNewButton = BSML::Lite::CreateUIButton(horizontal, "Reload New Playlists", Vec{0, 0}, Vec{40, 10}, [] {
+    auto reloadNewButton = BSML::Lite::CreateUIButton(parent, "Reload New Playlists", [] {
         ReloadPlaylists(false);
     });
+    FixButton(reloadNewButton, {35, 9});
     BSML::Lite::AddHoverHint(reloadNewButton, "Reloads new playlists from the playlist folder");
 
-    horizontal = BSML::Lite::CreateHorizontalLayoutGroup(parent);
-    horizontal->set_childControlWidth(false);
-    horizontal->set_childAlignment(UnityEngine::TextAnchor::MiddleCenter);
-    auto reloadAllButton = BSML::Lite::CreateUIButton(horizontal, "Reload All Playlists", Vec{0, 0}, Vec{40, 10}, [] {
+    auto reloadAllButton = BSML::Lite::CreateUIButton(parent, "Reload All Playlists", [] {
         ReloadPlaylists(true);
     });
+    FixButton(reloadAllButton, {35, 9});
     BSML::Lite::AddHoverHint(reloadAllButton, "Reloads all playlists from the playlist folder");
 
     AddConfigValueSlider(parent, getConfig().ScrollSpeed, 1, 0.1, 0.1, 10);

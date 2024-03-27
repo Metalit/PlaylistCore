@@ -55,7 +55,7 @@
     },
     {
       "id": "bsml",
-      "versionRange": "^0.4.0",
+      "versionRange": "^0.4.18",
       "additionalData": {
         "private": true
       }
@@ -86,7 +86,7 @@
     },
     {
       "id": "songcore",
-      "versionRange": "^0.2.0",
+      "versionRange": "^1.0.1",
       "additionalData": {}
     },
     {
