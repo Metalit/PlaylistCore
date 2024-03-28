@@ -66,12 +66,14 @@ namespace PlaylistCore {
 
         std::string SanitizeFileName(std::string_view fileName) {
             std::string newName;
-            // yes I know not all of these are disallowed, and also that they are unlikely to end up in a name
-            static const std::unordered_set<unsigned char> replacedChars = {
-                '/', '\n', '\\', '\'', '\"', ' ', '?', '<', '>', ':', '*'
+            // just whitelist simple characters
+            static const auto okChar = [](unsigned char c) {
+                if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) return true;
+                if (c == '_' || c == '-' || c == '(' || c == ')') return true;
+                return false;
             };
             std::transform(fileName.begin(), fileName.end(), std::back_inserter(newName), [](unsigned char c) {
-                if(replacedChars.contains(c))
+                if(!okChar(c))
                     return (unsigned char)('_');
                 return c;
             });
@@ -95,7 +97,7 @@ namespace PlaylistCore {
         std::string GetNewPlaylistPath(std::string_view title) {
             std::string fileTitle = SanitizeFileName(title);
             while(!UniqueFileName(fileTitle + ".bplist_BMBF.json", GetPlaylistsPath()))
-                fileTitle += "_";
+                fileTitle = "_" + fileTitle;
             return GetPlaylistsPath() + "/" + fileTitle + ".bplist_BMBF.json";
         }
 

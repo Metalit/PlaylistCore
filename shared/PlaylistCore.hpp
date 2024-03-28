@@ -126,12 +126,6 @@ namespace PlaylistCore {
     /// @return The number of songs missing from the playlist
     int PlaylistHasMissingSongs(Playlist* playlist);
 
-    /// @brief Downloads songs that are supposed to be in a playlist but not owned - does not modify the playlist
-    /// @param playlist The playlist to check for missing songs
-    /// @param finishCallback A function to run after all missing songs have been downloaded
-    /// @param updateCallback A function to run when each song is downloaded (args: number of songs downloaded, total songs to be downloaded)
-    void DownloadMissingSongsFromPlaylist(Playlist* playlist, std::function<void()> finishCallback = nullptr, std::function<void(int, int)> updateCallback = nullptr);
-
     /// @brief Removes songs that are supposed to be in a playlist but not owned from the playlist
     /// @param playlist The playlist to remove missing songs from
     void RemoveMissingSongsFromPlaylist(Playlist* playlist);
