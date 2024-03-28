@@ -81,7 +81,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: QPM Publish
-        uses: Fernthedev/qpm-rust-action@main
+        uses: Fernthedev/qpm-action@main
         with:
           workflow_token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -89,7 +89,7 @@ jobs:
 
           eager_publish: true # Will publish the package
           publish_token: "${{ secrets.QPM_KEY }}" # Token required for authorization publish to qpackages.com
-          version: "${{ github.event.inputs.version }}" # defaults to qpm-rust version, do not include v
+          version: "${{ github.event.inputs.version }}" # defaults to qpm version, do not include v
           tag: "v${{ github.event.inputs.version }}"
 
           # set to true if applicable, ASSUMES the file is already a release asset
