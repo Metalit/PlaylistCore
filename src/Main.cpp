@@ -35,7 +35,7 @@
 #include "GlobalNamespace/PlayerDataModel.hpp"
 #include "GlobalNamespace/SongPreviewPlayer.hpp"
 #include "GlobalNamespace/StandardLevelInfoSaveData.hpp"
-#include "GlobalNamespace/ISpriteAsyncLoader.hpp"
+#include "GlobalNamespace/SpriteAsyncLoader.hpp"
 #include "GlobalNamespace/EnvironmentInfoSO.hpp"
 #include "GlobalNamespace/BeatmapLevel.hpp"
 #include "GlobalNamespace/IEntitlementModel.hpp"
