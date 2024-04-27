@@ -24,9 +24,5 @@ namespace PlaylistCore {
         std::string ProcessImage(UnityEngine::Texture2D* texture, bool returnPngString);
 
         void WriteImageToFile(std::string_view pathToPng, UnityEngine::Texture2D* texture);
-
-        List<GlobalNamespace::BeatmapLevelPack*>* GetCustomPacks();
-
-        void SetCustomPacks(List<GlobalNamespace::BeatmapLevelPack*>* newPlaylists, bool updateSongs);
     }
 }

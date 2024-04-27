@@ -28,6 +28,7 @@
 #include "UnityEngine/TextureFormat.hpp"
 #include "GlobalNamespace/CustomLevelLoader.hpp"
 #include "GlobalNamespace/BeatmapLevel.hpp"
+#include "UnityEngine/Texture2D.hpp"
 
 using namespace SongCore;
 using namespace SongCore::SongLoader;
@@ -149,6 +150,39 @@ namespace PlaylistCore {
         RemoveCachedSprite(sprite);
     }
 
+    int AddCoverImage(UnityEngine::Texture2D* texture, std::string const& fileName) {
+        // downscale and convert to png
+        std::string imageString = ProcessImage(texture, true);
+        // return existing image if cached
+        if(auto sprite = HasCachedSprite(imageString)) {
+            int index = std::find(loadedImages.begin(), loadedImages.end(), sprite) - loadedImages.begin();
+            return index;
+        }
+        // remove any directories
+        std::string path;
+        auto dirPos = fileName.find_last_of("/");
+        if(dirPos != std::string::npos)
+            path = fileName.substr(dirPos);
+        else
+            path = fileName;
+        // sanitize file name
+        path = SanitizeFileName(path);
+        if(!path.ends_with(".png"))
+            path += ".png";
+        while(!UniqueFileName(path, GetCoversPath()))
+            path = "_" + path;
+        // put in covers path
+        path = GetCoversPath() + "/" + path;
+        LOG_INFO("Saving image {}", path);
+        // save and load
+        WriteImageToFile(path, texture);
+        auto sprite = UnityEngine::Sprite::Create(texture, UnityEngine::Rect(0, 0, texture->get_width(), texture->get_height()), {0.5, 0.5}, 1024, 1, UnityEngine::SpriteMeshType::FullRect, {0, 0, 0, 0}, false);
+        CacheSprite(sprite, std::move(imageString));
+        image_paths.insert({sprite, path});
+        loadedImages.emplace_back(sprite);
+        return loadedImages.size() - 1;
+    }
+
     void LoadCoverImages() {
         // ensure path exists
         auto imagePath = GetCoversPath();
@@ -196,7 +230,7 @@ namespace PlaylistCore {
                     LOG_INFO("Skipping loading image {}", path.string());
                     continue;
                 }
-                LOG_INFO("Loading image %s", path.string().c_str());
+                LOG_INFO("Loading image {}", path.string());
                 auto sprite = UnityEngine::Sprite::Create(texture, UnityEngine::Rect(0, 0, texture->get_width(), texture->get_height()), {0.5, 0.5}, 1024, 1, UnityEngine::SpriteMeshType::FullRect, {0, 0, 0, 0}, false);
                 CacheSprite(sprite, std::move(newImageString));
                 image_paths.insert({sprite, path});
@@ -389,7 +423,7 @@ namespace PlaylistCore {
         return nullptr;
     }
 
-    int GetPlaylistIndex(std::string const& path) {
+    int GetPlaylistIndex(std::string const& path, bool add) {
         auto orderVec = getConfig().Order.GetValue();
         // find index of playlist title in config
         for(int i = 0; i < orderVec.size(); i++) {
@@ -397,8 +431,10 @@ namespace PlaylistCore {
                 return i;
         }
         // add to end of config if not found
-        orderVec.push_back(path);
-        getConfig().Order.SetValue(orderVec);
+        if (add) {
+            orderVec.push_back(path);
+            getConfig().Order.SetValue(orderVec);
+        }
         return -1;
     }
 
@@ -422,7 +458,7 @@ namespace PlaylistCore {
         }
     }
 
-    std::string AddPlaylist(std::string const& title, std::string const& author, UnityEngine::Sprite* coverImage) {
+    std::pair<std::string, Playlist*> AddPlaylist(std::string const& title, std::string const& author, UnityEngine::Sprite* coverImage, bool reloadPlaylists) {
         // create playlist with info
         auto newPlaylist = BPList();
         newPlaylist.PlaylistTitle = title;
@@ -432,10 +468,8 @@ namespace PlaylistCore {
             auto bytes = UnityEngine::ImageConversion::EncodeToPNG(coverImage->get_texture());
             newPlaylist.ImageString = System::Convert::ToBase64String(bytes);
         }
-        // save playlist
-        std::string path = GetNewPlaylistPath(title);
-        WriteToFile(path, newPlaylist);
-        return path;
+        // add bplist
+        return AddPlaylist(newPlaylist, reloadPlaylists);
     }
 
     std::pair<std::string, Playlist*> AddPlaylist(BPList playlist, bool reloadPlaylists) {
@@ -691,24 +725,28 @@ namespace PlaylistCore {
             return;
         }
         // update json object
-        auto& json = playlist->playlistJSON;
-        // find song by hash (since the field is required) and remove
+        auto& songs = playlist->playlistJSON.Songs;
+        // find songs by hash since only that field is required
         auto levelHash = GetLevelHash(level);
-        for(auto itr = json.Songs.begin(); itr != json.Songs.end(); ++itr) {
-            auto& song = *itr;
+        int removeIndex = -1;
+        auto replacedLevelHash = GetLevelHash(levelList[index]);
+        int replacedLevelIndex = -1;
+        for(int i = 0; i < songs.size(); i++) {
+            auto& song = songs[i];
             LOWER(song.Hash);
-            if(song.Hash == levelHash) {
-                json.Songs.erase(itr);
-                // only erase
+            if(song.Hash == levelHash)
+                removeIndex = i;
+            if(song.Hash == replacedLevelHash)
+                replacedLevelIndex = i;
+            if (removeIndex >= 0 && replacedLevelIndex >= 0)
                 break;
-            }
         }
-        // add a blank song
-        json.Songs.insert(json.Songs.begin() + index, BPSong());
-        // set info
-        auto& songJson = json.Songs[index];
-        songJson.Hash = GetLevelHash(level);
-        songJson.SongName = level->songName;
+        // preserve existing song entry
+        auto songJson = songs[removeIndex];
+        if (!songJson.SongName.has_value())
+            songJson.SongName = level->songName;
+        songs.erase(songs.begin() + removeIndex);
+        songs.insert(songs.begin() + replacedLevelIndex, songJson);
         // write to file
         playlist->Save();
     }
