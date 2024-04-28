@@ -327,17 +327,16 @@ namespace PlaylistCore {
                         playlist->playlistCS = beatmapLevelPack;
                         // clear out duplicate songs
                         auto& songs = playlist->playlistJSON.Songs;
-                        std::unordered_set<std::string> hashes{};
+                        std::unordered_set<std::string> levelIds{};
                         // add all songs to the playlist object
                         std::vector<BeatmapLevel*> foundSongs;
                         for(auto itr = songs.begin(); itr != songs.end(); itr++) {
-                            LOWER(itr->Hash);
-                            if(hashes.contains(itr->Hash)) {
-                                songs.erase(itr);
-                                itr--;
-                            } else {
-                                hashes.insert(itr->Hash);
-                                if(auto search = API::Loading::GetLevelByHash(itr->Hash))
+                            LOWER(itr->LevelID);
+                            if(levelIds.contains(itr->LevelID))
+                                itr = songs.erase(itr);
+                            else {
+                                levelIds.insert(itr->LevelID);
+                                if(auto search = Utils::GetLevelByID(itr->LevelID))
                                     foundSongs.emplace_back(search);
                             }
                         }
@@ -575,14 +574,14 @@ namespace PlaylistCore {
     int PlaylistHasMissingSongs(Playlist* playlist) {
         int songsMissing = 0;
         for(auto& song : playlist->playlistJSON.Songs) {
-            std::string& hash = song.Hash;
-            LOWER(hash);
+            std::string& id = song.LevelID;
+            LOWER(id);
             bool hasSong = false;
             // search in songs in playlist instead of all songs
             // we need to treat the list as an array because it is initialized as an array elsewhere
             ArrayW<BeatmapLevel*> levelList(playlist->playlistCS->beatmapLevels);
             for(int i = 0; i < levelList.size(); i++) {
-                if(hash == GetLevelHash(levelList[i])) {
+                if(id == levelList[i]->levelID) {
                     hasSong = true;
                     break;
                 }
@@ -598,12 +597,12 @@ namespace PlaylistCore {
         // store exisiting songs in a new vector to replace the song list with
         std::vector<BPSong> existingSongs = {};
         for(auto& song : playlist->playlistJSON.Songs) {
-            if(API::Loading::GetLevelByHash(song.Hash))
+            if(Utils::GetLevelByID(song.LevelID))
                 existingSongs.push_back(song);
             else if(song.SongName.has_value())
                 LOG_INFO("Removing song {} from playlist {}", song.SongName.value(), playlist->name);
             else
-                LOG_INFO("Removing song with hash {} from playlist {}", song.Hash, playlist->name);
+                LOG_INFO("Removing song with id {} from playlist {}", song.LevelID, playlist->name);
         }
         // set the songs of the playlist to only those found
         playlist->playlistJSON.Songs = existingSongs;
@@ -631,10 +630,10 @@ namespace PlaylistCore {
         // update json object
         auto& json = playlist->playlistJSON;
         // add a blank song
-        json.Songs.emplace_back(BPSong());
+        auto& songJson = json.Songs.emplace_back();
         // set info
-        auto& songJson = *(json.Songs.end() - 1);
         songJson.Hash = GetLevelHash(level);
+        songJson.LevelID = (std::string) level->levelID;
         songJson.SongName = level->songName;
         // write to file
         playlist->Save();
@@ -670,12 +669,11 @@ namespace PlaylistCore {
         pack->beatmapLevels = newLevels;
         // update json object
         auto& json = playlist->playlistJSON;
-        // find song by hash (since the field is required) and remove
-        auto levelHash = GetLevelHash(level);
+        // find song by id and remove
         for(auto itr = json.Songs.begin(); itr != json.Songs.end(); ++itr) {
             auto& song = *itr;
-            LOWER(song.Hash);
-            if(song.Hash == levelHash) {
+            LOWER(song.LevelID);
+            if(song.LevelID == level->levelID) {
                 json.Songs.erase(itr);
                 // only erase
                 break;
@@ -726,17 +724,16 @@ namespace PlaylistCore {
         }
         // update json object
         auto& songs = playlist->playlistJSON.Songs;
-        // find songs by hash since only that field is required
-        auto levelHash = GetLevelHash(level);
+        // find songs by id
         int removeIndex = -1;
-        auto replacedLevelHash = GetLevelHash(levelList[index]);
+        auto replacedLevelID = levelList[index]->levelID;
         int replacedLevelIndex = -1;
         for(int i = 0; i < songs.size(); i++) {
             auto& song = songs[i];
-            LOWER(song.Hash);
-            if(song.Hash == levelHash)
+            LOWER(song.LevelID);
+            if(song.LevelID == level->levelID)
                 removeIndex = i;
-            if(song.Hash == replacedLevelHash)
+            if(song.LevelID == replacedLevelID)
                 replacedLevelIndex = i;
             if (removeIndex >= 0 && replacedLevelIndex >= 0)
                 break;

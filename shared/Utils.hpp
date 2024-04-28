@@ -7,6 +7,10 @@
 namespace PlaylistCore {
     namespace Utils {
 
+        GlobalNamespace::BeatmapLevel* GetLevelByID(std::string id);
+
+        std::string GetLevelHash(std::string id);
+
         std::string GetLevelHash(GlobalNamespace::BeatmapLevel* level);
 
         bool IsWipLevel(GlobalNamespace::BeatmapLevel* level);

@@ -4,6 +4,7 @@
 #include "ResettableStaticPtr.hpp"
 
 #include "songcore/shared/SongCore.hpp"
+#include "bsml/shared/Helpers/getters.hpp"
 
 #include "UnityEngine/ImageConversion.hpp"
 #include "UnityEngine/GameObject.hpp"
@@ -34,8 +35,15 @@ namespace PlaylistCore {
         // desired image size
         const int imageSize = 512;
 
-        std::string GetLevelHash(GlobalNamespace::BeatmapLevel* level) {
-            std::string id = level->levelID;
+        GlobalNamespace::BeatmapLevel* GetLevelByID(std::string id) {
+            if(auto search = SongCore::API::Loading::GetLevelByLevelID(id))
+                return search;
+            else if(auto levels = BSML::Helpers::GetMainFlowCoordinator()->_beatmapLevelsModel)
+                return levels->GetBeatmapLevel(id);
+            return nullptr;
+        }
+
+        std::string GetLevelHash(std::string id) {
             // should be in all songloader levels
             auto prefixIndex = id.find("custom_level_");
             if(prefixIndex == std::string::npos)
@@ -47,6 +55,10 @@ namespace PlaylistCore {
                 id = id.substr(0, wipIndex);
             LOWER(id);
             return id;
+        }
+
+        std::string GetLevelHash(GlobalNamespace::BeatmapLevel* level) {
+            return GetLevelHash(level->levelID);
         }
 
         bool IsWipLevel(GlobalNamespace::BeatmapLevel* level) {

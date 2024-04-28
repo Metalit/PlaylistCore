@@ -9,7 +9,22 @@ namespace PlaylistCore {
     )
 
     DECLARE_JSON_CLASS(BPSong,
-        NAMED_VALUE(std::string, Hash, "hash");
+        NAMED_VALUE_OPTIONAL(std::string, Hash, "hash");
+        private:
+        NAMED_VALUE_OPTIONAL(std::string, LevelID_Opt, "levelid");
+        DESERIALIZE_ACTION(id_hash,
+            if(!self->Hash && !self->LevelID_Opt)
+                throw JSONException("Song had no ID and no hash");
+            if(!self->LevelID_Opt)
+                self->LevelID_Opt = "custom_level_" + *self->Hash;
+            self->LevelID = *self->LevelID_Opt;
+        )
+        SERIALIZE_ACTION(id_hash,
+            if(!self->LevelID_Opt)
+                jsonObject.AddMember("levelid", self->LevelID, allocator);
+        )
+        public:
+        std::string LevelID;
         NAMED_VALUE_OPTIONAL(std::string, SongName, "songName");
         NAMED_VALUE_OPTIONAL(std::string, Key, "key");
         NAMED_VECTOR_OPTIONAL(PlaylistCore::Difficulty, Difficulties, "difficulties");
