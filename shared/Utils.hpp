@@ -6,6 +6,7 @@
 
 namespace PlaylistCore {
     namespace Utils {
+        bool CaseInsensitiveEquals(std::string const& a, std::string const& b);
 
         GlobalNamespace::BeatmapLevel* GetLevelByID(std::string id);
 

@@ -331,13 +331,14 @@ namespace PlaylistCore {
                         // add all songs to the playlist object
                         std::vector<BeatmapLevel*> foundSongs;
                         for(auto itr = songs.begin(); itr != songs.end(); itr++) {
-                            LOWER(itr->LevelID);
                             if(levelIds.contains(itr->LevelID))
                                 itr = songs.erase(itr);
                             else {
                                 levelIds.insert(itr->LevelID);
                                 if(auto search = Utils::GetLevelByID(itr->LevelID))
                                     foundSongs.emplace_back(search);
+                                else
+                                    LOG_ERROR("level id {} not found", itr->LevelID);
                             }
                         }
                         // save removed duplicates
@@ -575,13 +576,12 @@ namespace PlaylistCore {
         int songsMissing = 0;
         for(auto& song : playlist->playlistJSON.Songs) {
             std::string& id = song.LevelID;
-            LOWER(id);
             bool hasSong = false;
             // search in songs in playlist instead of all songs
             // we need to treat the list as an array because it is initialized as an array elsewhere
             ArrayW<BeatmapLevel*> levelList(playlist->playlistCS->beatmapLevels);
             for(int i = 0; i < levelList.size(); i++) {
-                if(id == levelList[i]->levelID) {
+                if(CaseInsensitiveEquals(id, levelList[i]->levelID)) {
                     hasSong = true;
                     break;
                 }
@@ -672,8 +672,7 @@ namespace PlaylistCore {
         // find song by id and remove
         for(auto itr = json.Songs.begin(); itr != json.Songs.end(); ++itr) {
             auto& song = *itr;
-            LOWER(song.LevelID);
-            if(song.LevelID == level->levelID) {
+            if(CaseInsensitiveEquals(song.LevelID, level->levelID)) {
                 json.Songs.erase(itr);
                 // only erase
                 break;
@@ -730,10 +729,9 @@ namespace PlaylistCore {
         int replacedLevelIndex = -1;
         for(int i = 0; i < songs.size(); i++) {
             auto& song = songs[i];
-            LOWER(song.LevelID);
-            if(song.LevelID == level->levelID)
+            if(CaseInsensitiveEquals(song.LevelID, levelList[i]->levelID))
                 removeIndex = i;
-            if(song.LevelID == replacedLevelID)
+            if(CaseInsensitiveEquals(song.LevelID, replacedLevelID))
                 replacedLevelIndex = i;
             if (removeIndex >= 0 && replacedLevelIndex >= 0)
                 break;

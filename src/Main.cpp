@@ -234,6 +234,14 @@ MAKE_HOOK_MATCH(LevelCollectionNavigationController_DidActivate, &LevelCollectio
     }
 }
 
+MAKE_HOOK(abort_hook, nullptr, void) {
+    auto logger = Paper::ConstLoggerContext("abort_hook");
+    logger.info("abort called");
+    logger.Backtrace(40);
+
+    abort_hook();
+}
+
 extern "C" void setup(CModInfo* info) {
     info->id = "PlaylistCore";
     info->version = VERSION;
@@ -263,6 +271,10 @@ extern "C" void late_load() {
 
     auto managerCInfo = managerModInfo.to_c();
     hasManager = modloader_require_mod(&managerCInfo, CMatchType::MatchType_IdOnly);
+
+    auto libc = dlopen("libc.so", RTLD_NOW);
+    auto abrt = dlsym(libc, "abort");
+    INSTALL_HOOK_DIRECT(logger, abort_hook, abrt);
 
     INSTALL_HOOK_ORIG(logger, LevelCollectionViewController_SetData);
     INSTALL_HOOK(logger, AnnotatedBeatmapLevelCollectionsGridView_OnEnable);

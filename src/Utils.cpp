@@ -4,7 +4,7 @@
 #include "ResettableStaticPtr.hpp"
 
 #include "songcore/shared/SongCore.hpp"
-#include "bsml/shared/Helpers/getters.hpp"
+#include "songcore/shared/SongLoader/RuntimeSongLoader.hpp"
 
 #include "UnityEngine/ImageConversion.hpp"
 #include "UnityEngine/GameObject.hpp"
@@ -35,11 +35,21 @@ namespace PlaylistCore {
         // desired image size
         const int imageSize = 512;
 
+        bool CaseInsensitiveEquals(std::string const& a, std::string const& b) {
+            if(a.size() != b.size())
+                return false;
+            for(int i = 0; i < a.size(); i++) {
+                if(tolower(a[i]) != tolower(b[i]))
+                    return false;
+            }
+            return true;
+        }
+
         GlobalNamespace::BeatmapLevel* GetLevelByID(std::string id) {
             if(auto search = SongCore::API::Loading::GetLevelByLevelID(id))
                 return search;
-            else if(auto levels = BSML::Helpers::GetMainFlowCoordinator()->_beatmapLevelsModel)
-                return levels->GetBeatmapLevel(id);
+            else if(auto instance = SongCore::SongLoader::RuntimeSongLoader::get_instance())
+                return (*il2cpp_utils::GetFieldValue<GlobalNamespace::BeatmapLevelsModel*>(instance, "_beatmapLevelsModel"))->GetBeatmapLevel(id);
             return nullptr;
         }
 
