@@ -337,6 +337,13 @@ namespace PlaylistCore {
                                 levelIds.insert(itr->LevelID);
                                 if(auto search = Utils::GetLevelByID(itr->LevelID))
                                     foundSongs.emplace_back(search);
+                                else if(itr->Hash) {
+                                    LOG_INFO("level id {} not found, attempting to use hash", itr->LevelID);
+                                    if(auto search = Utils::GetLevelByID(*itr->Hash))
+                                        foundSongs.emplace_back(search);
+                                    else
+                                        LOG_ERROR("level id {} not found", *itr->Hash);
+                                }
                                 else
                                     LOG_ERROR("level id {} not found", itr->LevelID);
                             }
@@ -598,6 +605,8 @@ namespace PlaylistCore {
         std::vector<BPSong> existingSongs = {};
         for(auto& song : playlist->playlistJSON.Songs) {
             if(Utils::GetLevelByID(song.LevelID))
+                existingSongs.push_back(song);
+            else if(song.Hash && Utils::GetLevelByID(*song.Hash))
                 existingSongs.push_back(song);
             else if(song.SongName.has_value())
                 LOG_INFO("Removing song {} from playlist {}", song.SongName.value(), playlist->name);
