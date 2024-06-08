@@ -6,7 +6,7 @@
   "version": "${version}",
   "modloader": "Scotland2",
   "packageId": "com.beatgames.beatsaber",
-  "packageVersion": "1.36.1_8647505571",
+  "packageVersion": "1.37.0_9064817954",
   "description": "Loads playlists and provides lots of functionality to other mods.",
   "coverImage": "cover.png",
   "dependencies": [],

@@ -3,10 +3,7 @@
 #include "Types/Config.hpp"
 #include "PlaylistCore.hpp"
 #include "Settings.hpp"
-#include "Utils.hpp"
 #include "ResettableStaticPtr.hpp"
-
-#include <chrono>
 
 #include "beatsaber-hook/shared/utils/il2cpp-utils.hpp"
 #include "beatsaber-hook/shared/config/config-utils.hpp"
@@ -15,8 +12,6 @@
 #include "songcore/shared/SongCore.hpp"
 
 #include "bsml/shared/BSML.hpp"
-
-#include "custom-types/shared/delegate.hpp"
 
 #include "GlobalNamespace/StandardLevelDetailViewController.hpp"
 #include "GlobalNamespace/LevelCollectionViewController.hpp"
@@ -34,31 +29,23 @@
 #include "GlobalNamespace/PlayerData.hpp"
 #include "GlobalNamespace/PlayerDataModel.hpp"
 #include "GlobalNamespace/SongPreviewPlayer.hpp"
-#include "GlobalNamespace/StandardLevelInfoSaveData.hpp"
 #include "GlobalNamespace/EnvironmentInfoSO.hpp"
 #include "GlobalNamespace/BeatmapLevel.hpp"
 #include "GlobalNamespace/IEntitlementModel.hpp"
 
 #include "UnityEngine/Resources.hpp"
 #include "UnityEngine/GameObject.hpp"
-#include "UnityEngine/Rect.hpp" // This needs to be included before RectTransform
 #include "UnityEngine/RectTransform.hpp"
-#include "UnityEngine/Events/UnityAction.hpp"
-#include "UnityEngine/UI/Button.hpp"
-#include "UnityEngine/UI/VerticalLayoutGroup.hpp"
 #include "HMUI/TableView.hpp"
 #include "HMUI/ScrollView.hpp"
 #include "HMUI/ViewController.hpp"
 #include "HMUI/FlowCoordinator.hpp"
 #include "HMUI/InputFieldView.hpp"
-#include "Tweening/TimeTweeningManager.hpp"
 #include "Tweening/Vector2Tween.hpp"
 #include "Zenject/DiContainer.hpp"
 #include "Zenject/StaticMemoryPool_7.hpp"
-#include "System/Tuple_2.hpp"
 #include "System/Action_1.hpp"
 #include "System/Action_2.hpp"
-#include "System/Collections/Generic/HashSet_1.hpp"
 
 using namespace GlobalNamespace;
 using namespace PlaylistCore;
@@ -154,12 +141,12 @@ MAKE_HOOK_MATCH(AnnotatedBeatmapLevelCollectionsGridViewAnimator_AnimateOpen, &A
 
 // ensure animator doesn't get stuck at the wrong position
 MAKE_HOOK_MATCH(AnnotatedBeatmapLevelCollectionsGridViewAnimator_ScrollToRowIdxInstant, &AnnotatedBeatmapLevelCollectionsGridViewAnimator::ScrollToRowIdxInstant,
-        void, AnnotatedBeatmapLevelCollectionsGridViewAnimator* self, int selectedRow) {
+        void, AnnotatedBeatmapLevelCollectionsGridViewAnimator* self, int selectedColumn, int selectedRow) {
 
     // despawns tweens and force sets the viewport and anchored pos
-    self->AnimateClose(selectedRow, false);
+    self->AnimateClose(selectedColumn, selectedRow, false);
 
-    AnnotatedBeatmapLevelCollectionsGridViewAnimator_ScrollToRowIdxInstant(self, selectedRow);
+    AnnotatedBeatmapLevelCollectionsGridViewAnimator_ScrollToRowIdxInstant(self, selectedColumn, selectedRow);
 }
 
 // prevent download icon showing up on empty custom playlists unless manager is changing the behavior
