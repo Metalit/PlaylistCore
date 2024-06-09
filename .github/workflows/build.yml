@@ -46,10 +46,10 @@ jobs:
           echo libs:
           ls -la ${GITHUB_WORKSPACE}/extern/libs
 
-      - name: Build
+      - name: Build & create qmod
         run: |
           cd ${GITHUB_WORKSPACE}
-          qpm s build
+          qpm s qmod
 
       - name: Get Library Name
         id: libname
@@ -59,9 +59,27 @@ jobs:
           files=( $pattern )
           echo NAME="${files[0]}" >> $GITHUB_OUTPUT
 
+      - name: Rename debug
+        run: |
+          mv ./build/debug/${{ steps.libname.outputs.NAME }} ./build/debug/debug_${{ steps.libname.outputs.NAME }}
+
       - name: Upload non-debug artifact
         uses: actions/upload-artifact@v2
         with:
           name: ${{ steps.libname.outputs.NAME }}
           path: ./build/${{ steps.libname.outputs.NAME }}
+          if-no-files-found: error
+
+      - name: Upload debug artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: debug_${{ steps.libname.outputs.NAME }}
+          path: ./build/debug/debug_${{ steps.libname.outputs.NAME }}
+          if-no-files-found: error
+
+      - name: Upload qmod artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ env.qmodName }}.qmod
+          path: ./${{ env.qmodName }}.qmod
           if-no-files-found: error
