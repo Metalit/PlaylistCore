@@ -1,6 +1,6 @@
-#include "Main.hpp"
 #include "CustomTypes/CustomListSource.hpp"
 
+#include "Main.hpp"
 #include "bsml/shared/BSML-Lite.hpp"
 #include "bsml/shared/BSML/Components/TableView.hpp"
 
@@ -26,13 +26,13 @@ void CustomListSource::dtor() {
 
 HMUI::TableCell* CustomListSource::CellForIdx(HMUI::TableView* tableView, int idx) {
     // kinda needed
-    if(!type) {
+    if (!type) {
         LOG_ERROR("Type not supplied to list source");
         return nullptr;
     }
     // check for available reusable cells
     CustomTableCell* reusableCell = (CustomTableCell*) tableView->DequeueReusableCellForIdentifier(reuseIdentifier).unsafePtr();
-    if(!reusableCell) {
+    if (!reusableCell) {
         // create a new cell
         static ConstString name("CustomCellGameObject");
         auto cellObject = UnityEngine::GameObject::New_ctor(name);
@@ -94,13 +94,13 @@ void CustomListSource::clear() {
 }
 
 UnityEngine::Sprite* CustomListSource::getSprite(int index) {
-    if(index < 0 || index >= sprites.size())
+    if (index < 0 || index >= sprites.size())
         return nullptr;
     return sprites[index];
 }
 
 std::string CustomListSource::getText(int index) {
-    if(index < 0 || index >= texts.size())
+    if (index < 0 || index >= texts.size())
         return "";
     return texts[index];
 }
@@ -113,8 +113,7 @@ void CustomListSource::ScrollListLeft(CustomListSource* list, int numCells) {
     // int idx = tableView->get_scrolledRow();
     // idx -= tableView->get_scrollDistance();
     int idx = std::min(
-        (int)(tableView->get_contentTransform()->get_anchoredPosition().x / tableView->get_cellSize()) * -1,
-        tableView->get_numberOfCells() - 1
+        (int) (tableView->get_contentTransform()->get_anchoredPosition().x / tableView->get_cellSize()) * -1, tableView->get_numberOfCells() - 1
     );
     idx -= numCells;
     idx = std::max(idx, 0);
@@ -128,8 +127,7 @@ void CustomListSource::ScrollListRight(CustomListSource* list, int numCells) {
     // int idx = tableView->get_scrolledRow();
     // idx += tableView->get_scrollDistance();
     int idx = std::min(
-        (int)(tableView->get_contentTransform()->get_anchoredPosition().x / tableView->get_cellSize()) * -1,
-        tableView->get_numberOfCells() - 1
+        (int) (tableView->get_contentTransform()->get_anchoredPosition().x / tableView->get_cellSize()) * -1, tableView->get_numberOfCells() - 1
     );
     idx += numCells;
     int max = tableView->get_dataSource()->NumberOfCells();

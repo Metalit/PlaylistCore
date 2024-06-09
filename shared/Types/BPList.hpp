@@ -13,14 +13,14 @@ namespace PlaylistCore {
         private:
         NAMED_VALUE_OPTIONAL(std::string, LevelID_Opt, "levelid");
         DESERIALIZE_ACTION(id_hash,
-            if(!self->Hash && !self->LevelID_Opt)
+            if (!self->Hash && !self->LevelID_Opt)
                 throw JSONException("Song had no ID and no hash");
-            if(!self->LevelID_Opt)
+            if (!self->LevelID_Opt)
                 self->LevelID_Opt = "custom_level_" + *self->Hash;
             self->LevelID = *self->LevelID_Opt;
         )
         SERIALIZE_ACTION(id_hash,
-            if(!self->LevelID_Opt)
+            if (!self->LevelID_Opt)
                 jsonObject.AddMember("levelid", self->LevelID, allocator);
         )
         public:
@@ -42,8 +42,8 @@ namespace PlaylistCore {
         NAMED_VALUE_OPTIONAL(std::string, ImageString, NAME_OPTS("imageString", "image"));
         NAMED_VALUE_OPTIONAL(PlaylistCore::CustomData, CustomData, "customData");
         DESERIALIZE_ACTION(0,
-            if(jsonValue.HasMember("downloadURL") && jsonValue["downloadURL"].IsString()) {
-                if(!self->CustomData.has_value())
+            if (jsonValue.HasMember("downloadURL") && jsonValue["downloadURL"].IsString()) {
+                if (!self->CustomData.has_value())
                     self->CustomData.emplace();
                 self->CustomData->SyncURL = jsonValue["downloadURL"].GetString();
             }

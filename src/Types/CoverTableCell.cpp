@@ -1,13 +1,11 @@
-#include "Main.hpp"
 #include "CustomTypes/CoverTableCell.hpp"
-#include "ResettableStaticPtr.hpp"
-
-#include "bsml/shared/BSML-Lite.hpp"
 
 #include "GlobalNamespace/AnnotatedBeatmapLevelCollectionCell.hpp"
-
+#include "Main.hpp"
+#include "ResettableStaticPtr.hpp"
 #include "UnityEngine/GameObject.hpp"
 #include "UnityEngine/Resources.hpp"
+#include "bsml/shared/BSML-Lite.hpp"
 
 using namespace PlaylistCore;
 using namespace BSML;
@@ -21,15 +19,23 @@ void CoverTableCell::ctor() {
     static auto info = il2cpp_utils::FindMethodUnsafe(classof(HMUI::TableCell*), ".ctor", 0);
     il2cpp_utils::RunMethodRethrow(thisref, info);
 
-    refreshVisualsFunc = [this](){ refreshVisuals(); };
-    initFunc = [this](UnityEngine::Sprite* sprite, std::string text){ init(sprite, text); };
-    setSpriteFunc = [this](UnityEngine::Sprite* sprite){ setSprite(sprite); };
-    setTextFunc = [this](std::string text){ setText(text); };
+    refreshVisualsFunc = [this]() {
+        refreshVisuals();
+    };
+    initFunc = [this](UnityEngine::Sprite* sprite, std::string text) {
+        init(sprite, text);
+    };
+    setSpriteFunc = [this](UnityEngine::Sprite* sprite) {
+        setSprite(sprite);
+    };
+    setTextFunc = [this](std::string text) {
+        setText(text);
+    };
 }
 
 void CoverTableCell::refreshVisuals() {
-    if(selected || highlighted) {
-        selectedImage->set_color1({1, 1, 1, (float)(highlighted ? 1 : 0)});
+    if (selected || highlighted) {
+        selectedImage->set_color1({1, 1, 1, (float) (highlighted ? 1 : 0)});
         selectedImage->get_gameObject()->set_active(true);
     } else {
         selectedImage->get_gameObject()->set_active(false);

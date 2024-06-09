@@ -1,8 +1,8 @@
 #pragma once
 
-#include "UnityEngine/Texture2D.hpp"
 #include "GlobalNamespace/BeatmapLevel.hpp"
 #include "GlobalNamespace/BeatmapLevelPack.hpp"
+#include "UnityEngine/Texture2D.hpp"
 
 namespace PlaylistCore {
     namespace Utils {

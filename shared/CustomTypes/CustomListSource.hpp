@@ -2,24 +2,23 @@
 
 #include "custom-types/shared/macros.hpp"
 
+#include "HMUI/TableCell.hpp"
+#include "HMUI/TableView.hpp"
 #include "UnityEngine/MonoBehaviour.hpp"
 #include "UnityEngine/Sprite.hpp"
-
-#include "HMUI/TableView.hpp"
-#include "HMUI/TableCell.hpp"
 
 DECLARE_CLASS_CODEGEN(PlaylistCore, CustomTableCell, HMUI::TableCell,
 
     DECLARE_OVERRIDE_METHOD_MATCH(void, SelectionDidChange, &HMUI::SelectableCell::SelectionDidChange, HMUI::SelectableCell::TransitionType transitionType);
     DECLARE_OVERRIDE_METHOD_MATCH(void, HighlightDidChange, &HMUI::SelectableCell::HighlightDidChange, HMUI::SelectableCell::TransitionType transitionType);
 
-    protected:
+   protected:
     std::function<void()> refreshVisualsFunc;
     std::function<void(UnityEngine::Sprite*, std::string)> initFunc;
     std::function<void(UnityEngine::Sprite*)> setSpriteFunc;
     std::function<void(std::string)> setTextFunc;
 
-    public:
+   public:
     void refreshVisuals() { refreshVisualsFunc(); }
     void init(UnityEngine::Sprite* sprite, std::string text) { initFunc(sprite, text); }
     void setSprite(UnityEngine::Sprite* sprite) { setSpriteFunc(sprite); }
@@ -39,13 +38,13 @@ DECLARE_CLASS_CODEGEN_INTERFACES(PlaylistCore, CustomListSource, UnityEngine::Mo
     DECLARE_OVERRIDE_METHOD_MATCH(float, CellSize, &HMUI::TableView::IDataSource::CellSize);
     DECLARE_OVERRIDE_METHOD_MATCH(int, NumberOfCells, &HMUI::TableView::IDataSource::NumberOfCells);
 
-    private:
+   private:
     std::vector<UnityEngine::Sprite*> sprites;
     std::vector<std::string> texts;
     bool expandCell;
     System::Type* type;
 
-    public:
+   public:
     static void ScrollListLeft(CustomListSource* list, int numCells);
     static void ScrollListRight(CustomListSource* list, int numCells);
 

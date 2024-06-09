@@ -1,51 +1,47 @@
 #include "Main.hpp"
-#include "Types/Scroller.hpp"
-#include "Types/Config.hpp"
-#include "PlaylistCore.hpp"
-#include "Settings.hpp"
-#include "ResettableStaticPtr.hpp"
 
-#include "beatsaber-hook/shared/utils/il2cpp-utils.hpp"
-#include "beatsaber-hook/shared/config/config-utils.hpp"
-#include "beatsaber-hook/shared/utils/hooking.hpp"
-
-#include "songcore/shared/SongCore.hpp"
-
-#include "bsml/shared/BSML.hpp"
-
-#include "GlobalNamespace/StandardLevelDetailViewController.hpp"
-#include "GlobalNamespace/LevelCollectionViewController.hpp"
-#include "GlobalNamespace/LevelCollectionTableView.hpp"
-#include "GlobalNamespace/LevelCollectionNavigationController.hpp"
-#include "GlobalNamespace/LevelPackDetailViewController.hpp"
-#include "GlobalNamespace/MenuTransitionsHelper.hpp"
-#include "GlobalNamespace/BeatmapDifficultySegmentedControlController.hpp"
-#include "GlobalNamespace/AnnotatedBeatmapLevelCollectionsViewController.hpp"
+#include "GlobalNamespace/AnnotatedBeatmapLevelCollectionCell.hpp"
 #include "GlobalNamespace/AnnotatedBeatmapLevelCollectionsGridView.hpp"
 #include "GlobalNamespace/AnnotatedBeatmapLevelCollectionsGridViewAnimator.hpp"
-#include "GlobalNamespace/AnnotatedBeatmapLevelCollectionCell.hpp"
-#include "GlobalNamespace/PageControl.hpp"
+#include "GlobalNamespace/AnnotatedBeatmapLevelCollectionsViewController.hpp"
+#include "GlobalNamespace/BeatmapDifficultySegmentedControlController.hpp"
+#include "GlobalNamespace/BeatmapLevel.hpp"
+#include "GlobalNamespace/EnvironmentInfoSO.hpp"
+#include "GlobalNamespace/IEntitlementModel.hpp"
+#include "GlobalNamespace/LevelCollectionNavigationController.hpp"
+#include "GlobalNamespace/LevelCollectionTableView.hpp"
+#include "GlobalNamespace/LevelCollectionViewController.hpp"
 #include "GlobalNamespace/LevelFilteringNavigationController.hpp"
+#include "GlobalNamespace/LevelPackDetailViewController.hpp"
+#include "GlobalNamespace/MenuTransitionsHelper.hpp"
+#include "GlobalNamespace/PageControl.hpp"
 #include "GlobalNamespace/PlayerData.hpp"
 #include "GlobalNamespace/PlayerDataModel.hpp"
 #include "GlobalNamespace/SongPreviewPlayer.hpp"
-#include "GlobalNamespace/EnvironmentInfoSO.hpp"
-#include "GlobalNamespace/BeatmapLevel.hpp"
-#include "GlobalNamespace/IEntitlementModel.hpp"
-
-#include "UnityEngine/Resources.hpp"
-#include "UnityEngine/GameObject.hpp"
-#include "UnityEngine/RectTransform.hpp"
-#include "HMUI/TableView.hpp"
-#include "HMUI/ScrollView.hpp"
-#include "HMUI/ViewController.hpp"
+#include "GlobalNamespace/StandardLevelDetailViewController.hpp"
 #include "HMUI/FlowCoordinator.hpp"
 #include "HMUI/InputFieldView.hpp"
-#include "Tweening/Vector2Tween.hpp"
-#include "Zenject/DiContainer.hpp"
-#include "Zenject/StaticMemoryPool_7.hpp"
+#include "HMUI/ScrollView.hpp"
+#include "HMUI/TableView.hpp"
+#include "HMUI/ViewController.hpp"
+#include "PlaylistCore.hpp"
+#include "ResettableStaticPtr.hpp"
+#include "Settings.hpp"
 #include "System/Action_1.hpp"
 #include "System/Action_2.hpp"
+#include "Tweening/Vector2Tween.hpp"
+#include "Types/Config.hpp"
+#include "Types/Scroller.hpp"
+#include "UnityEngine/GameObject.hpp"
+#include "UnityEngine/RectTransform.hpp"
+#include "UnityEngine/Resources.hpp"
+#include "Zenject/DiContainer.hpp"
+#include "Zenject/StaticMemoryPool_7.hpp"
+#include "beatsaber-hook/shared/config/config-utils.hpp"
+#include "beatsaber-hook/shared/utils/hooking.hpp"
+#include "beatsaber-hook/shared/utils/il2cpp-utils.hpp"
+#include "bsml/shared/BSML.hpp"
+#include "songcore/shared/SongCore.hpp"
 
 using namespace GlobalNamespace;
 using namespace PlaylistCore;
@@ -66,35 +62,56 @@ std::string GetCoversPath() {
 }
 
 // override header cell behavior and change no data prefab
-MAKE_HOOK_MATCH(LevelCollectionViewController_SetData, &LevelCollectionViewController::SetData,
-        void, LevelCollectionViewController* self, ArrayW<BeatmapLevel*> beatmapLevels, StringW headerText, UnityEngine::Sprite* headerSprite, bool sortLevels, bool sortPreviewBeatmapLevels, UnityEngine::GameObject* noDataInfoPrefab) {
+MAKE_HOOK_MATCH(
+    LevelCollectionViewController_SetData,
+    &LevelCollectionViewController::SetData,
+    void,
+    LevelCollectionViewController* self,
+    ArrayW<BeatmapLevel*> beatmapLevels,
+    StringW headerText,
+    UnityEngine::Sprite* headerSprite,
+    bool sortLevels,
+    bool sortPreviewBeatmapLevels,
+    UnityEngine::GameObject* noDataInfoPrefab
+) {
     // only check for null strings, not empty
     // string will be null for level collections but not level packs
     self->_showHeader = (bool) headerText;
     // copy base game method implementation
     self->_levelCollectionTableView->Init(headerText, headerSprite);
-    if(self->_noDataInfoGO) {
+    if (self->_noDataInfoGO) {
         UnityEngine::Object::Destroy(self->_noDataInfoGO);
         self->_noDataInfoGO = nullptr;
     }
     // also override check for empty collection
-    if(beatmapLevels ) {
+    if (beatmapLevels) {
         self->_levelCollectionTableView->get_gameObject()->SetActive(true);
-        self->_levelCollectionTableView->SetData(reinterpret_cast<System::Collections::Generic::IReadOnlyList_1<BeatmapLevel*>*>(beatmapLevels.convert()), self->_playerDataModel->playerData->favoritesLevelIds, sortLevels, sortPreviewBeatmapLevels);
+        self->_levelCollectionTableView->SetData(
+            reinterpret_cast<System::Collections::Generic::IReadOnlyList_1<BeatmapLevel*>*>(beatmapLevels.convert()),
+            self->_playerDataModel->playerData->favoritesLevelIds,
+            sortLevels,
+            sortPreviewBeatmapLevels
+        );
         self->_levelCollectionTableView->RefreshLevelsAvailability();
     } else {
-        self->_levelCollectionTableView->SetData(ListW<BeatmapLevel*>::New()->i___System__Collections__Generic__IReadOnlyList_1_T_(), self->_playerDataModel->playerData->favoritesLevelIds, sortLevels, sortPreviewBeatmapLevels);
-        if(noDataInfoPrefab)
+        self->_levelCollectionTableView->SetData(
+            ListW<BeatmapLevel*>::New()->i___System__Collections__Generic__IReadOnlyList_1_T_(),
+            self->_playerDataModel->playerData->favoritesLevelIds,
+            sortLevels,
+            sortPreviewBeatmapLevels
+        );
+        if (noDataInfoPrefab)
             self->_noDataInfoGO = self->_container->InstantiatePrefab(noDataInfoPrefab, self->_noDataInfoContainer);
         // change no custom songs text if playlists exist
         // because if they do then the only way to get here with that specific no data indicator is to have no playlists filtered
         static ConstString message("No playlists are contained in the filtering options selected.");
-        if(GetLoadedPlaylists().size() > 0 && !SongCore::API::Loading::GetAllLevels().empty() && noDataInfoPrefab == FindComponent<LevelFilteringNavigationController*>()->_emptyCustomSongListInfoPrefab.ptr())
+        if (GetLoadedPlaylists().size() > 0 && !SongCore::API::Loading::GetAllLevels().empty() &&
+            noDataInfoPrefab == FindComponent<LevelFilteringNavigationController*>()->_emptyCustomSongListInfoPrefab.ptr())
             self->_noDataInfoGO->GetComponentInChildren<TMPro::TextMeshProUGUI*>()->set_text(message);
         self->_levelCollectionTableView->get_gameObject()->SetActive(false);
     }
-    if(self->get_isInViewControllerHierarchy()) {
-        if(self->_showHeader)
+    if (self->get_isInViewControllerHierarchy()) {
+        if (self->_showHeader)
             self->_levelCollectionTableView->SelectLevelPackHeaderCell();
         else
             self->_levelCollectionTableView->ClearSelection();
@@ -103,19 +120,26 @@ MAKE_HOOK_MATCH(LevelCollectionViewController_SetData, &LevelCollectionViewContr
 }
 
 // add scrolling to playlist selector
-MAKE_HOOK_MATCH(AnnotatedBeatmapLevelCollectionsGridView_OnEnable, &AnnotatedBeatmapLevelCollectionsGridView::OnEnable,
-        void, AnnotatedBeatmapLevelCollectionsGridView* self) {
-
+MAKE_HOOK_MATCH(
+    AnnotatedBeatmapLevelCollectionsGridView_OnEnable,
+    &AnnotatedBeatmapLevelCollectionsGridView::OnEnable,
+    void,
+    AnnotatedBeatmapLevelCollectionsGridView* self
+) {
     AnnotatedBeatmapLevelCollectionsGridView_OnEnable(self);
 
-    if(!self->GetComponent<Scroller*>())
+    if (!self->GetComponent<Scroller*>())
         self->get_gameObject()->AddComponent<Scroller*>()->Init(self->_animator->_contentTransform);
 }
 
 // make the playlist opening animation work better with the playlist scroller
-MAKE_HOOK_MATCH(AnnotatedBeatmapLevelCollectionsGridViewAnimator_AnimateOpen, &AnnotatedBeatmapLevelCollectionsGridViewAnimator::AnimateOpen,
-        void, AnnotatedBeatmapLevelCollectionsGridViewAnimator* self, bool animated) {
-
+MAKE_HOOK_MATCH(
+    AnnotatedBeatmapLevelCollectionsGridViewAnimator_AnimateOpen,
+    &AnnotatedBeatmapLevelCollectionsGridViewAnimator::AnimateOpen,
+    void,
+    AnnotatedBeatmapLevelCollectionsGridViewAnimator* self,
+    bool animated
+) {
     // store actual values to avoid breaking things when closing
     int rowCount = self->_rowCount;
     int selectedRow = self->_selectedRow;
@@ -135,9 +159,14 @@ MAKE_HOOK_MATCH(AnnotatedBeatmapLevelCollectionsGridViewAnimator_AnimateOpen, &A
 }
 
 // ensure animator doesn't get stuck at the wrong position
-MAKE_HOOK_MATCH(AnnotatedBeatmapLevelCollectionsGridViewAnimator_ScrollToRowIdxInstant, &AnnotatedBeatmapLevelCollectionsGridViewAnimator::ScrollToRowIdxInstant,
-        void, AnnotatedBeatmapLevelCollectionsGridViewAnimator* self, int selectedColumn, int selectedRow) {
-
+MAKE_HOOK_MATCH(
+    AnnotatedBeatmapLevelCollectionsGridViewAnimator_ScrollToRowIdxInstant,
+    &AnnotatedBeatmapLevelCollectionsGridViewAnimator::ScrollToRowIdxInstant,
+    void,
+    AnnotatedBeatmapLevelCollectionsGridViewAnimator* self,
+    int selectedColumn,
+    int selectedRow
+) {
     // despawns tweens and force sets the viewport and anchored pos
     self->AnimateClose(selectedColumn, selectedRow, false);
 
@@ -145,29 +174,36 @@ MAKE_HOOK_MATCH(AnnotatedBeatmapLevelCollectionsGridViewAnimator_ScrollToRowIdxI
 }
 
 // prevent download icon showing up on empty custom playlists unless manager is changing the behavior
-MAKE_HOOK_MATCH(AnnotatedBeatmapLevelCollectionCell_RefreshAvailabilityAsync, &AnnotatedBeatmapLevelCollectionCell::RefreshAvailabilityAsync,
-        void, AnnotatedBeatmapLevelCollectionCell* self, IEntitlementModel* entitlementModel) {
-
+MAKE_HOOK_MATCH(
+    AnnotatedBeatmapLevelCollectionCell_RefreshAvailabilityAsync,
+    &AnnotatedBeatmapLevelCollectionCell::RefreshAvailabilityAsync,
+    void,
+    AnnotatedBeatmapLevelCollectionCell* self,
+    IEntitlementModel* entitlementModel
+) {
     AnnotatedBeatmapLevelCollectionCell_RefreshAvailabilityAsync(self, entitlementModel);
 
-    if(hasManager)
+    if (hasManager)
         return;
 
     auto pack = self->_beatmapLevelPack;
-    if(pack) {
+    if (pack) {
         auto playlist = GetPlaylistWithPrefix(pack->packID);
-        if(playlist)
+        if (playlist)
             self->SetDownloadIconVisible(false);
     }
 }
 
 // throw away objects on a soft restart
-MAKE_HOOK_MATCH(MenuTransitionsHelper_RestartGame, &MenuTransitionsHelper::RestartGame,
-        void, MenuTransitionsHelper* self, System::Action_1<Zenject::DiContainer*>* finishCallback) {
-
-    for(auto scroller : UnityEngine::Resources::FindObjectsOfTypeAll<Scroller*>()) {
+MAKE_HOOK_MATCH(
+    MenuTransitionsHelper_RestartGame,
+    &MenuTransitionsHelper::RestartGame,
+    void,
+    MenuTransitionsHelper* self,
+    System::Action_1<Zenject::DiContainer*>* finishCallback
+) {
+    for (auto scroller : UnityEngine::Resources::FindObjectsOfTypeAll<Scroller*>())
         UnityEngine::Object::Destroy(scroller);
-    }
 
     ClearLoadedImages();
 
@@ -180,10 +216,16 @@ MAKE_HOOK_MATCH(MenuTransitionsHelper_RestartGame, &MenuTransitionsHelper::Resta
 
 // override to prevent crashes due to opening with a null level pack
 #define COMBINE(delegate1, selfMethodName, ...) delegate1 = (__VA_ARGS__) System::Delegate::Combine(delegate1, System::Delegate::CreateDelegate(csTypeOf(__VA_ARGS__), self, #selfMethodName));
-MAKE_HOOK_MATCH(LevelCollectionNavigationController_DidActivate, &LevelCollectionNavigationController::DidActivate,
-        void, LevelCollectionNavigationController* self, bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
-
-    if(addedToHierarchy) {
+MAKE_HOOK_MATCH(
+    LevelCollectionNavigationController_DidActivate,
+    &LevelCollectionNavigationController::DidActivate,
+    void,
+    LevelCollectionNavigationController* self,
+    bool firstActivation,
+    bool addedToHierarchy,
+    bool screenSystemEnabling
+) {
+    if (addedToHierarchy) {
         COMBINE(self->_levelCollectionViewController->didSelectLevelEvent, HandleLevelCollectionViewControllerDidSelectLevel, System::Action_2<UnityW<LevelCollectionViewController>, BeatmapLevel*>*);
         COMBINE(self->_levelCollectionViewController->didSelectHeaderEvent, HandleLevelCollectionViewControllerDidSelectPack, System::Action_1<UnityW<LevelCollectionViewController>>*);
         COMBINE(self->_levelDetailViewController->didPressActionButtonEvent, HandleLevelDetailViewControllerDidPressActionButton, System::Action_1<UnityW<StandardLevelDetailViewController>>*);
@@ -196,8 +238,7 @@ MAKE_HOOK_MATCH(LevelCollectionNavigationController_DidActivate, &LevelCollectio
             self->_levelCollectionViewController->SelectLevel(self->_beatmapLevelToBeSelectedAfterPresent);
             self->SetChildViewController(self->_levelCollectionViewController);
             self->_beatmapLevelToBeSelectedAfterPresent = nullptr;
-        }
-        else {
+        } else {
             // override here so that the pack detail controller will not be shown if no pack is selected
             if (self->_levelPack) {
                 ArrayW<HMUI::ViewController*> children{2};
@@ -207,10 +248,9 @@ MAKE_HOOK_MATCH(LevelCollectionNavigationController_DidActivate, &LevelCollectio
             } else
                 self->SetChildViewController(self->_levelCollectionViewController);
         }
-    } else if(self->_loading) {
+    } else if (self->_loading) {
         self->ClearChildViewControllers();
-    }
-    else if(self->_hideDetailViewController) {
+    } else if (self->_hideDetailViewController) {
         self->SetChildViewController(self->_levelCollectionViewController);
         self->_hideDetailViewController = false;
     }
@@ -230,13 +270,13 @@ extern "C" void setup(CModInfo* info) {
     info->version_long = 0;
 
     auto playlistsPath = GetPlaylistsPath();
-    if(!direxists(playlistsPath))
+    if (!direxists(playlistsPath))
         mkpath(playlistsPath);
 
     LOG_INFO("Playlist path is {}", playlistsPath);
 
     auto coversPath = GetCoversPath();
-    if(!direxists(coversPath))
+    if (!direxists(coversPath))
         mkpath(coversPath);
 
     getConfig().Init(modInfo);
@@ -248,7 +288,7 @@ extern "C" void late_load() {
     custom_types::Register::AutoRegister();
 
     BSML::Init();
-    BSML::Register::RegisterMenuButton("Reload Playlists", "Reloads all playlists!", []{ SongCore::API::Loading::RefreshLevelPacks(); });
+    BSML::Register::RegisterMenuButton("Reload Playlists", "Reloads all playlists!", [] { SongCore::API::Loading::RefreshLevelPacks(); });
     BSML::Register::RegisterSettingsMenu<SettingsViewController*>("Playlist Core");
 
     auto managerCInfo = managerModInfo.to_c();
@@ -267,9 +307,7 @@ extern "C" void late_load() {
     INSTALL_HOOK_ORIG(logger, LevelCollectionNavigationController_DidActivate);
 
     SongCore::API::Loading::GetCustomLevelPacksWillRefreshEvent().addCallback(
-        [](SongCore::SongLoader::CustomBeatmapLevelsRepository* customBeatmapLevelsRepository) {
-            LoadPlaylists(customBeatmapLevelsRepository, true);
-        }
+        [](SongCore::SongLoader::CustomBeatmapLevelsRepository* customBeatmapLevelsRepository) { LoadPlaylists(customBeatmapLevelsRepository, true); }
     );
 
     LOG_INFO("Successfully installed PlaylistCore!");

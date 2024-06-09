@@ -2,15 +2,15 @@
 
 #include "custom-types/shared/macros.hpp"
 
-#include "UnityEngine/MonoBehaviour.hpp"
-#include "UnityEngine/RectTransform.hpp"
-#include "UnityEngine/Vector2.hpp"
-#include "UnityEngine/EventSystems/PointerEventData.hpp"
 #include "GlobalNamespace/IVRPlatformHelper.hpp"
+#include "UnityEngine/EventSystems/PointerEventData.hpp"
+#include "UnityEngine/MonoBehaviour.hpp"
+#include "UnityEngine/Vector2.hpp"
+#include "UnityEngine/RectTransform.hpp"
 
 DECLARE_CLASS_CODEGEN(PlaylistCore, Scroller, UnityEngine::MonoBehaviour,
 
-    private:
+   private:
     Scroller* cachedPtr = nullptr;
     bool pointerHovered = false;
 

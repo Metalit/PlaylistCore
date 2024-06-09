@@ -1,9 +1,8 @@
 #pragma once
 
 #include "CustomListSource.hpp"
-
-#include "HMUI/ImageView.hpp"
 #include "HMUI/HoverHint.hpp"
+#include "HMUI/ImageView.hpp"
 
 DECLARE_CLASS_CUSTOM(PlaylistCore, CoverTableCell, PlaylistCore::CustomTableCell,
 

@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Types/BPList.hpp"
+#include "GlobalNamespace/BeatmapLevel.hpp"
 #include "SimpleSafePtr.hpp"
+#include "Types/BPList.hpp"
+#include "UnityEngine/Sprite.hpp"
 #include "songcore/shared/SongLoader/CustomBeatmapLevelsRepository.hpp"
 #include "songcore/shared/SongLoader/CustomLevelPack.hpp"
-#include "GlobalNamespace/BeatmapLevel.hpp"
-#include "UnityEngine/Sprite.hpp"
 
 namespace PlaylistCore {
 
@@ -93,7 +93,8 @@ namespace PlaylistCore {
     /// @param coverImage The cover image for the playlist - does not have to be a loaded image
     /// @param reloadPlaylists Whether to reload playlists (not fully) after creating
     /// @return The path to the created playlist and the playlist itself if loaded, otherwise nullptr
-    std::pair<std::string, Playlist*> AddPlaylist(std::string const& title, std::string const& author, UnityEngine::Sprite* coverImage = nullptr, bool reloadPlaylists = true);
+    std::pair<std::string, Playlist*>
+    AddPlaylist(std::string const& title, std::string const& author, UnityEngine::Sprite* coverImage = nullptr, bool reloadPlaylists = true);
 
     /// @brief Creates a new playlist file
     /// @param playlist The BPList object to create
