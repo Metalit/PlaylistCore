@@ -102,14 +102,9 @@ MAKE_HOOK_MATCH(LevelCollectionViewController_SetData, &LevelCollectionViewContr
     }
 }
 
-// make playlist selector only 5 playlists wide and add scrolling
+// add scrolling to playlist selector
 MAKE_HOOK_MATCH(AnnotatedBeatmapLevelCollectionsGridView_OnEnable, &AnnotatedBeatmapLevelCollectionsGridView::OnEnable,
         void, AnnotatedBeatmapLevelCollectionsGridView* self) {
-
-    self->GetComponent<UnityEngine::RectTransform*>()->set_anchorMax({0.83, 1});
-    self->_pageControl->_content->get_gameObject()->SetActive(false);
-    auto content = self->_animator->_contentTransform;
-    content->set_anchoredPosition({0, content->get_anchoredPosition().y});
 
     AnnotatedBeatmapLevelCollectionsGridView_OnEnable(self);
 

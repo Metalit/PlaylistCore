@@ -47,14 +47,14 @@ void Scroller::Update() {
 		if (anyJoystickMaxAxis.sqrMagnitude > 0.01)
 			HandleJoystickWasNotCenteredThisFrame(anyJoystickMaxAxis);
 	}
-    auto pos = contentTransform->get_anchoredPosition().y;
-    float newPos = std::lerp(pos, destinationPos, UnityEngine::Time::get_deltaTime() * 8);
+    auto pos = contentTransform->get_anchoredPosition();
+    float newPos = std::lerp(pos.y, destinationPos, UnityEngine::Time::get_deltaTime() * 8);
     if(std::abs(newPos - destinationPos) < 0.01) {
         newPos = destinationPos;
         if (!pointerHovered)
             set_enabled(false);
     }
-    contentTransform->set_anchoredPosition({0, newPos});
+    contentTransform->set_anchoredPosition({pos.x, newPos});
 }
 
 void Scroller::OnDestroy() {
@@ -63,7 +63,6 @@ void Scroller::OnDestroy() {
 }
 
 void Scroller::Init(UnityEngine::RectTransform* content) {
-    content->set_anchoredPosition({0, content->get_anchoredPosition().y});
     contentTransform = content;
     cachedPtr = this;
 }
