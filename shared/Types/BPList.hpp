@@ -22,6 +22,8 @@ namespace PlaylistCore {
         SERIALIZE_ACTION(id_hash,
             if (!self->LevelID_Opt)
                 jsonObject.AddMember("levelid", self->LevelID, allocator);
+            else
+                jsonObject["levelid"].SetString(self->LevelID, allocator);
         )
         public:
         std::string LevelID;
