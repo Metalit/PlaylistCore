@@ -98,10 +98,103 @@
         "id": "paper",
         "versionRange": "^3.6.1",
         "additionalData": {}
+      },
+      {
+        "id": "web-utils",
+        "versionRange": "^0.6.5",
+        "additionalData": {}
+      },
+      {
+        "id": "beatsaverplusplus",
+        "versionRange": "^0.1.1",
+        "additionalData": {}
       }
     ]
   },
   "restoredDependencies": [
+    {
+      "dependency": {
+        "id": "web-utils",
+        "versionRange": "=0.6.5",
+        "additionalData": {
+          "soLink": "https://github.com/RedBrumbler/WebUtils/releases/download/v0.6.5/libweb-utils.so",
+          "debugSoLink": "https://github.com/RedBrumbler/WebUtils/releases/download/v0.6.5/debug_libweb-utils.so",
+          "overrideSoName": "libweb-utils.so",
+          "modLink": "https://github.com/RedBrumbler/WebUtils/releases/download/v0.6.5/WebUtils.qmod",
+          "branchName": "version/v0_6_5",
+          "cmake": false
+        }
+      },
+      "version": "0.6.5"
+    },
+    {
+      "dependency": {
+        "id": "rapidjson-macros",
+        "versionRange": "=1.2.1",
+        "additionalData": {
+          "headersOnly": true,
+          "branchName": "version/v1_2_1",
+          "cmake": true
+        }
+      },
+      "version": "1.2.1"
+    },
+    {
+      "dependency": {
+        "id": "bsml",
+        "versionRange": "=0.4.40",
+        "additionalData": {
+          "soLink": "https://github.com/RedBrumbler/Quest-BSML/releases/download/v0.4.40/libbsml.so",
+          "debugSoLink": "https://github.com/RedBrumbler/Quest-BSML/releases/download/v0.4.40/debug_libbsml.so",
+          "overrideSoName": "libbsml.so",
+          "modLink": "https://github.com/RedBrumbler/Quest-BSML/releases/download/v0.4.40/BSML.qmod",
+          "branchName": "version/v0_4_40",
+          "cmake": true
+        }
+      },
+      "version": "0.4.40"
+    },
+    {
+      "dependency": {
+        "id": "libil2cpp",
+        "versionRange": "=0.3.2",
+        "additionalData": {
+          "headersOnly": true,
+          "cmake": false
+        }
+      },
+      "version": "0.3.2"
+    },
+    {
+      "dependency": {
+        "id": "songcore",
+        "versionRange": "=1.1.13",
+        "additionalData": {
+          "soLink": "https://github.com/raineio/Quest-SongCore/releases/download/v1.1.13/libsongcore.so",
+          "debugSoLink": "https://github.com/raineio/Quest-SongCore/releases/download/v1.1.13/debug_libsongcore.so",
+          "overrideSoName": "libsongcore.so",
+          "modLink": "https://github.com/raineio/Quest-SongCore/releases/download/v1.1.13/SongCore.qmod",
+          "branchName": "version/v1_1_13",
+          "cmake": true
+        }
+      },
+      "version": "1.1.13"
+    },
+    {
+      "dependency": {
+        "id": "tinyxml2",
+        "versionRange": "=10.0.0",
+        "additionalData": {
+          "soLink": "https://github.com/MillzyDev/NDK-tinyxml2/releases/download/v10.0.0/libtinyxml2.so",
+          "debugSoLink": "https://github.com/MillzyDev/NDK-tinyxml2/releases/download/v10.0.0/debug_libtinyxml2.so",
+          "overrideSoName": "libtinyxml2.so",
+          "modLink": "https://github.com/MillzyDev/NDK-tinyxml2/releases/download/v10.0.0/tinyxml2.qmod",
+          "branchName": "version/v10_0_0",
+          "cmake": true
+        }
+      },
+      "version": "10.0.0"
+    },
     {
       "dependency": {
         "id": "paper",
@@ -121,33 +214,6 @@
         }
       },
       "version": "3.6.3"
-    },
-    {
-      "dependency": {
-        "id": "rapidjson-macros",
-        "versionRange": "=1.2.1",
-        "additionalData": {
-          "headersOnly": true,
-          "branchName": "version/v1_2_1",
-          "cmake": true
-        }
-      },
-      "version": "1.2.1"
-    },
-    {
-      "dependency": {
-        "id": "bsml",
-        "versionRange": "=0.4.34",
-        "additionalData": {
-          "soLink": "https://github.com/RedBrumbler/Quest-BSML/releases/download/v0.4.34/libbsml.so",
-          "debugSoLink": "https://github.com/RedBrumbler/Quest-BSML/releases/download/v0.4.34/debug_libbsml.so",
-          "overrideSoName": "libbsml.so",
-          "modLink": "https://github.com/RedBrumbler/Quest-BSML/releases/download/v0.4.34/BSML.qmod",
-          "branchName": "version/v0_4_34",
-          "cmake": true
-        }
-      },
-      "version": "0.4.34"
     },
     {
       "dependency": {
@@ -185,17 +251,6 @@
     },
     {
       "dependency": {
-        "id": "libil2cpp",
-        "versionRange": "=0.3.2",
-        "additionalData": {
-          "headersOnly": true,
-          "cmake": false
-        }
-      },
-      "version": "0.3.2"
-    },
-    {
-      "dependency": {
         "id": "bs-cordl",
         "versionRange": "=3700.0.0",
         "additionalData": {
@@ -216,20 +271,6 @@
         }
       },
       "version": "3700.0.0"
-    },
-    {
-      "dependency": {
-        "id": "songcore",
-        "versionRange": "=1.1.12",
-        "additionalData": {
-          "soLink": "https://github.com/raineio/Quest-SongCore/releases/download/v1.1.12/libsongcore.so",
-          "debugSoLink": "https://github.com/raineio/Quest-SongCore/releases/download/v1.1.12/debug_libsongcore.so",
-          "overrideSoName": "libsongcore.so",
-          "modLink": "https://github.com/raineio/Quest-SongCore/releases/download/v1.1.12/SongCore.qmod",
-          "branchName": "version/v1_1_12"
-        }
-      },
-      "version": "1.1.12"
     },
     {
       "dependency": {
@@ -259,6 +300,21 @@
     },
     {
       "dependency": {
+        "id": "beatsaverplusplus",
+        "versionRange": "=0.1.1",
+        "additionalData": {
+          "soLink": "https://github.com/RedBrumbler/BeatSaverPlusPlus/releases/download/v0.1.1/libbeatsaverplusplus.so",
+          "debugSoLink": "https://github.com/RedBrumbler/BeatSaverPlusPlus/releases/download/v0.1.1/debug_libbeatsaverplusplus.so",
+          "overrideSoName": "libbeatsaverplusplus.so",
+          "modLink": "https://github.com/RedBrumbler/BeatSaverPlusPlus/releases/download/v0.1.1/BeatSaverPlusPlus.qmod",
+          "branchName": "version/v0_1_1",
+          "cmake": false
+        }
+      },
+      "version": "0.1.1"
+    },
+    {
+      "dependency": {
         "id": "fmt",
         "versionRange": "=10.0.0",
         "additionalData": {
@@ -272,21 +328,6 @@
               "-DFMT_HEADER_ONLY"
             ]
           }
-        }
-      },
-      "version": "10.0.0"
-    },
-    {
-      "dependency": {
-        "id": "tinyxml2",
-        "versionRange": "=10.0.0",
-        "additionalData": {
-          "soLink": "https://github.com/MillzyDev/NDK-tinyxml2/releases/download/v10.0.0/libtinyxml2.so",
-          "debugSoLink": "https://github.com/MillzyDev/NDK-tinyxml2/releases/download/v10.0.0/debug_libtinyxml2.so",
-          "overrideSoName": "libtinyxml2.so",
-          "modLink": "https://github.com/MillzyDev/NDK-tinyxml2/releases/download/v10.0.0/tinyxml2.qmod",
-          "branchName": "version/v10_0_0",
-          "cmake": true
         }
       },
       "version": "10.0.0"

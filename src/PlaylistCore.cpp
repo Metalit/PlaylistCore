@@ -22,6 +22,7 @@
 #include "Utils.hpp"
 #include "assets.hpp"
 #include "beatsaber-hook/shared/utils/il2cpp-utils.hpp"
+#include "beatsaverplusplus/shared/BeatSaver.hpp"
 #include "bsml/shared/BSML/MainThreadScheduler.hpp"
 #include "songcore/shared/SongCore.hpp"
 
@@ -362,9 +363,14 @@ namespace PlaylistCore {
                                     foundSongs.emplace_back(search);
                                 else if (itr->Hash) {
                                     LOG_INFO("level id {} not found, attempting to use hash", itr->LevelID);
-                                    if (auto search = Utils::GetLevelByID(*itr->Hash))
+                                    if (auto search = Utils::GetLevelByID(*itr->Hash)) {
+                                        // fix levelid and hash
+                                        itr->LevelID = *itr->Hash;
+                                        itr->Hash = Utils::GetLevelHash(itr->LevelID);
+                                        if (itr->Hash->empty())
+                                            itr->Hash = std::nullopt;
                                         foundSongs.emplace_back(search);
-                                    else
+                                    } else
                                         LOG_ERROR("level id {} not found", *itr->Hash);
                                 } else
                                     LOG_ERROR("level id {} not found", itr->LevelID);
@@ -616,11 +622,94 @@ namespace PlaylistCore {
                     break;
                 }
             }
-            if (hasSong)
-                continue;
-            songsMissing += 1;
+            if (!hasSong)
+                songsMissing += 1;
         }
         return songsMissing;
+    }
+
+    struct GetBeatmapForDownloadRequest : WebUtils::GenericRequest<BeatSaver::API::BeatmapResponse> {
+        GetBeatmapForDownloadRequest(std::string hash) : GenericRequest(BeatSaver::API::GetBeatmapByHashURLOptions(hash)), hash(hash) {}
+        std::string hash;
+        BeatSaver::API::BeatmapDownloadInfo GetDownload() {
+            auto& map = *targetResponse.responseData;
+            for (auto& version : map.Versions) {
+                if (CaseInsensitiveEquals(version.Hash, hash))
+                    return {map, version};
+            }
+            logger.warn("failed to find version of beatmap with hash {}", hash);
+            logger.info("attempting alternative download path");
+            return {map.Id, fmt::format(BEATSAVER_CDN_URL "/{}.zip", hash), map.CreateFolderName()};
+        }
+    };
+
+    void DownloadMissingSongsFromPlaylist(Playlist* playlist, std::function<void()> onFinished, std::function<void(int, int)> onProgress) {
+        // find all the songs needing downloads
+        std::vector<std::string> songsToGet;
+        for (auto& song : playlist->playlistJSON.Songs) {
+            bool hasSong = false;
+            // same as PlaylistHasMissingSongs
+            ArrayW<BeatmapLevel*> levelList(playlist->playlistCS->beatmapLevels);
+            for (int i = 0; i < levelList.size(); i++) {
+                if (CaseInsensitiveEquals(song.LevelID, levelList[i]->levelID)) {
+                    hasSong = true;
+                    break;
+                }
+            }
+            if (!hasSong)
+                songsToGet.emplace_back(Utils::GetLevelHash(song.LevelID));
+        }
+
+        if (songsToGet.empty()) {
+            onFinished();
+            return;
+        }
+        onProgress(songsToGet.size(), 0);
+
+        using Retry = WebUtils::RatelimitedDispatcher::RetryOptions;
+        auto requester = new WebUtils::RatelimitedDispatcher();
+        auto completed = new std::atomic_int(0);
+
+        auto increment = [completed, onProgress, total = songsToGet.size()]() {
+            int num = ++(*completed);
+            BSML::MainThreadScheduler::Schedule([onProgress = std::move(onProgress), num, total]() { onProgress(total, num); });
+        };
+
+        requester->downloader = BeatSaver::API::GetBeatsaverDownloader();
+        requester->maxConcurrentRequests = 3;
+        requester->onRequestFinished = [requester, increment](bool success, WebUtils::IRequest* request) -> std::optional<Retry> {
+            if (!success) {
+                auto response = request->TargetResponse;
+                auto http = response->HttpCode;
+                auto curl = response->CurlStatus;
+                logger.error("{} request failed {} {}", request->URL.fullURl(), http, curl);
+                if (curl == 0 && (http >= 200 && http < 300))
+                    return Retry{std::chrono::milliseconds(100)};
+                // not retrying, mark as done
+                increment();
+                return std::nullopt;
+            }
+            // add download request if it was a get request
+            if (auto cast = dynamic_cast<GetBeatmapForDownloadRequest*>(request))
+                requester->AddRequest(BeatSaver::API::CreateDownloadBeatmapRequest(cast->GetDownload()));
+            else if (auto cast = dynamic_cast<BeatSaver::API::DownloadBeatmapRequest*>(request))
+                increment();
+
+            return std::nullopt;
+        };
+        requester->allFinished = [requester, completed, onFinished = std::move(onFinished)](auto) {
+            BSML::MainThreadScheduler::Schedule([requester, completed, onFinished = std::move(onFinished)]() {
+                delete requester;
+                delete completed;
+                onFinished();
+            });
+        };
+
+        // TODO: use api with batches of 50
+        for (auto& hash : songsToGet)
+            requester->AddRequest(std::make_unique<GetBeatmapForDownloadRequest>(hash));
+
+        requester->StartDispatchIfNeeded();
     }
 
     void RemoveMissingSongsFromPlaylist(Playlist* playlist) {
@@ -628,8 +717,6 @@ namespace PlaylistCore {
         std::vector<BPSong> existingSongs = {};
         for (auto& song : playlist->playlistJSON.Songs) {
             if (Utils::GetLevelByID(song.LevelID))
-                existingSongs.push_back(song);
-            else if (song.Hash && Utils::GetLevelByID(*song.Hash))
                 existingSongs.push_back(song);
             else if (song.SongName.has_value())
                 LOG_INFO("Removing song {} from playlist {}", song.SongName.value(), playlist->name);

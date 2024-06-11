@@ -36,7 +36,10 @@
       "tomb": [
         "pwsh ./scripts/pull-tombstone.ps1 -analyze"
       ]
-    }
+    },
+    "qmodIncludeDirs": [],
+    "qmodIncludeFiles": [],
+    "qmodOutput": null
   },
   "dependencies": [
     {
@@ -71,8 +74,8 @@
       "id": "scotland2",
       "versionRange": "^0.1.4",
       "additionalData": {
-        "private": true,
-        "includeQmod": false
+        "includeQmod": false,
+        "private": true
       }
     },
     {
@@ -93,6 +96,16 @@
     {
       "id": "paper",
       "versionRange": "^3.6.1",
+      "additionalData": {}
+    },
+    {
+      "id": "web-utils",
+      "versionRange": "^0.6.5",
+      "additionalData": {}
+    },
+    {
+      "id": "beatsaverplusplus",
+      "versionRange": "^0.1.1",
       "additionalData": {}
     }
   ]
