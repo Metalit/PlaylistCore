@@ -628,19 +628,37 @@ namespace PlaylistCore {
         return songsMissing;
     }
 
-    struct GetBeatmapForDownloadRequest : WebUtils::GenericRequest<BeatSaver::API::BeatmapResponse> {
-        GetBeatmapForDownloadRequest(std::string hash) : GenericRequest(BeatSaver::API::GetBeatmapByHashURLOptions(hash)), hash(hash) {}
-        std::string hash;
-        BeatSaver::API::BeatmapDownloadInfo GetDownload() {
-            auto& map = *targetResponse.responseData;
-            for (auto& version : map.Versions) {
-                if (CaseInsensitiveEquals(version.Hash, hash))
-                    return {map, version};
+    struct GetBeatmapsForDownloadRequest : WebUtils::GenericRequest<BeatSaver::API::BeatmapMapResponse> {
+        GetBeatmapsForDownloadRequest(std::span<std::string> hashes) :
+            GenericRequest(BeatSaver::API::GetBeatmapsByHashesURLOptions(hashes)),
+            hashes(hashes.begin(), hashes.end()) {}
+
+        BeatSaver::API::BeatmapDownloadInfo GetDownload(std::string const& hash) {
+            std::optional<BeatSaver::Models::Beatmap> foundMap = std::nullopt;
+            for (auto& [key, map] : *targetResponse.responseData) {
+                for (auto& version : map.Versions) {
+                    if (CaseInsensitiveEquals(version.Hash, hash))
+                        return {map, version};
+                }
+                if (CaseInsensitiveEquals(key, hash))
+                    foundMap = map;
             }
-            logger.warn("failed to find version of beatmap with hash {}", hash);
-            logger.info("attempting alternative download path");
-            return {map.Id, fmt::format(BEATSAVER_CDN_URL "/{}.zip", hash), map.CreateFolderName()};
+            if (foundMap)
+                logger.warn("failed to find version of beatmap with hash {}, attempting alternative download", hash);
+            else
+                logger.warn("failed to find beatmap with hash {}, attempting download anyway", hash);
+            std::string key = foundMap ? foundMap->Id : hash;
+            std::string folder = foundMap ? foundMap->CreateFolderName() : hash;
+            return {key, fmt::format(BEATSAVER_CDN_URL "/{}.zip", hash), folder};
         }
+        std::vector<BeatSaver::API::BeatmapDownloadInfo> GetDownloads() {
+            std::vector<BeatSaver::API::BeatmapDownloadInfo> ret;
+            for (auto& hash : hashes)
+                ret.emplace_back(GetDownload(hash));
+            return ret;
+        }
+
+        std::vector<std::string> hashes;
     };
 
     void DownloadMissingSongsFromPlaylist(Playlist* playlist, std::function<void()> onFinished, std::function<void(int, int)> onProgress) {
@@ -689,10 +707,11 @@ namespace PlaylistCore {
                 increment();
                 return std::nullopt;
             }
-            // add download request if it was a get request
-            if (auto cast = dynamic_cast<GetBeatmapForDownloadRequest*>(request))
-                requester->AddRequest(BeatSaver::API::CreateDownloadBeatmapRequest(cast->GetDownload()));
-            else if (auto cast = dynamic_cast<BeatSaver::API::DownloadBeatmapRequest*>(request))
+            // add download requests if it was a get request
+            if (auto cast = dynamic_cast<GetBeatmapsForDownloadRequest*>(request)) {
+                for (auto& download : cast->GetDownloads())
+                    requester->AddRequest(BeatSaver::API::CreateDownloadBeatmapRequest(download));
+            } else if (auto cast = dynamic_cast<BeatSaver::API::DownloadBeatmapRequest*>(request))
                 increment();
 
             return std::nullopt;
@@ -705,9 +724,10 @@ namespace PlaylistCore {
             });
         };
 
-        // TODO: use api with batches of 50
-        for (auto& hash : songsToGet)
-            requester->AddRequest(std::make_unique<GetBeatmapForDownloadRequest>(hash));
+        for (int i = 0; i < songsToGet.size(); i += 50) {
+            auto span = std::span(songsToGet).subspan(i, std::min(50, (int) songsToGet.size() - i));
+            requester->AddRequest(std::make_unique<GetBeatmapsForDownloadRequest>(span));
+        }
 
         requester->StartDispatchIfNeeded();
     }
