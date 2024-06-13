@@ -7,6 +7,7 @@
 #include "GlobalNamespace/BeatmapDifficultySegmentedControlController.hpp"
 #include "GlobalNamespace/BeatmapLevel.hpp"
 #include "GlobalNamespace/EnvironmentInfoSO.hpp"
+#include "GlobalNamespace/GridView.hpp"
 #include "GlobalNamespace/IEntitlementModel.hpp"
 #include "GlobalNamespace/LevelCollectionNavigationController.hpp"
 #include "GlobalNamespace/LevelCollectionTableView.hpp"
@@ -117,6 +118,36 @@ MAKE_HOOK_MATCH(
             self->_levelCollectionTableView->ClearSelection();
         self->_songPreviewPlayer->CrossfadeToDefault();
     }
+}
+
+// fix playlists opening with exactly 7 playlists
+MAKE_HOOK_MATCH(
+    AnnotatedBeatmapLevelCollectionsGridView_OnPointerEnter,
+    &AnnotatedBeatmapLevelCollectionsGridView::OnPointerEnter,
+    void,
+    AnnotatedBeatmapLevelCollectionsGridView* self,
+    UnityEngine::EventSystems::PointerEventData* eventData
+) {
+    AnnotatedBeatmapLevelCollectionsGridView_OnPointerEnter(self, eventData);
+
+    if (self->_gridView->rowCount == 1 && self->_gridView->columnCount > 6) {
+        self->didOpenAnnotatedBeatmapLevelCollectionEvent->Invoke();
+        self->_animator->AnimateOpen(true);
+    }
+}
+
+// now fix playlists closing with exactly 7 playlists
+MAKE_HOOK_MATCH(
+    AnnotatedBeatmapLevelCollectionsGridView_OnPointerExit,
+    &AnnotatedBeatmapLevelCollectionsGridView::OnPointerExit,
+    void,
+    AnnotatedBeatmapLevelCollectionsGridView* self,
+    UnityEngine::EventSystems::PointerEventData* eventData
+) {
+    AnnotatedBeatmapLevelCollectionsGridView_OnPointerExit(self, eventData);
+
+    if (self->_gridView->rowCount == 1 && self->_gridView->columnCount > 6)
+        self->CloseLevelCollection(true);
 }
 
 // add scrolling to playlist selector
@@ -299,6 +330,8 @@ extern "C" void late_load() {
     INSTALL_HOOK_DIRECT(logger, abort_hook, abrt);
 
     INSTALL_HOOK_ORIG(logger, LevelCollectionViewController_SetData);
+    INSTALL_HOOK(logger, AnnotatedBeatmapLevelCollectionsGridView_OnPointerEnter);
+    INSTALL_HOOK(logger, AnnotatedBeatmapLevelCollectionsGridView_OnPointerExit);
     INSTALL_HOOK(logger, AnnotatedBeatmapLevelCollectionsGridView_OnEnable);
     INSTALL_HOOK(logger, AnnotatedBeatmapLevelCollectionsGridViewAnimator_AnimateOpen);
     INSTALL_HOOK(logger, AnnotatedBeatmapLevelCollectionsGridViewAnimator_ScrollToRowIdxInstant);
