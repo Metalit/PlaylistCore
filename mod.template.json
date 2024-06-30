@@ -13,5 +13,10 @@
   "lateModFiles": ["${binary}"],
   "libraryFiles": [],
   "fileCopies": [],
-  "copyExtensions": []
+  "copyExtensions": [
+    {
+      "extension": "bplist",
+      "destination": "/sdcard/ModData/com.beatgames.beatsaber/Mods/PlaylistManager/Playlists"
+    }
+  ]
 }
