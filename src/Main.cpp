@@ -189,21 +189,6 @@ MAKE_HOOK_MATCH(
     self->_selectedRow = selectedRow;
 }
 
-// ensure animator doesn't get stuck at the wrong position
-MAKE_HOOK_MATCH(
-    AnnotatedBeatmapLevelCollectionsGridViewAnimator_ScrollToRowIdxInstant,
-    &AnnotatedBeatmapLevelCollectionsGridViewAnimator::ScrollToRowIdxInstant,
-    void,
-    AnnotatedBeatmapLevelCollectionsGridViewAnimator* self,
-    int selectedColumn,
-    int selectedRow
-) {
-    // despawns tweens and force sets the viewport and anchored pos
-    self->AnimateClose(selectedColumn, selectedRow, false);
-
-    AnnotatedBeatmapLevelCollectionsGridViewAnimator_ScrollToRowIdxInstant(self, selectedColumn, selectedRow);
-}
-
 // prevent download icon showing up on empty custom playlists unless manager is changing the behavior
 MAKE_HOOK_MATCH(
     AnnotatedBeatmapLevelCollectionCell_RefreshAvailabilityAsync,
@@ -334,7 +319,6 @@ extern "C" void late_load() {
     INSTALL_HOOK(logger, AnnotatedBeatmapLevelCollectionsGridView_OnPointerExit);
     INSTALL_HOOK(logger, AnnotatedBeatmapLevelCollectionsGridView_OnEnable);
     INSTALL_HOOK(logger, AnnotatedBeatmapLevelCollectionsGridViewAnimator_AnimateOpen);
-    INSTALL_HOOK(logger, AnnotatedBeatmapLevelCollectionsGridViewAnimator_ScrollToRowIdxInstant);
     INSTALL_HOOK(logger, AnnotatedBeatmapLevelCollectionCell_RefreshAvailabilityAsync);
     INSTALL_HOOK(logger, MenuTransitionsHelper_RestartGame);
     INSTALL_HOOK_ORIG(logger, LevelCollectionNavigationController_DidActivate);
