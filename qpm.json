@@ -5,7 +5,7 @@
   "info": {
     "name": "PlaylistCore",
     "id": "playlistcore",
-    "version": "1.4.1",
+    "version": "1.4.2",
     "url": "https://github.com/Metalit/PlaylistCore",
     "additionalData": {
       "overrideSoName": "libplaylistcore.so"
