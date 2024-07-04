@@ -354,7 +354,7 @@ namespace PlaylistCore {
                         std::unordered_set<std::string> levelIds{};
                         // add all songs to the playlist object
                         std::vector<BeatmapLevel*> foundSongs;
-                        for (auto itr = songs.begin(); itr != songs.end(); itr++) {
+                        for (auto itr = songs.begin(); itr != songs.end();) {
                             if (levelIds.contains(itr->LevelID))
                                 itr = songs.erase(itr);
                             else {
@@ -374,6 +374,7 @@ namespace PlaylistCore {
                                         LOG_ERROR("level id {} not found", *itr->Hash);
                                 } else
                                     LOG_ERROR("level id {} not found", itr->LevelID);
+                                itr++;
                             }
                         }
                         // save removed duplicates
@@ -435,11 +436,11 @@ namespace PlaylistCore {
                 playlistArray.push_back(playlist);
         }
         // remove empty slots
-        for (auto itr = playlistArray.begin(); itr != playlistArray.end(); itr++) {
-            if (*itr == nullptr) {
-                playlistArray.erase(itr);
-                itr--;
-            }
+        for (auto itr = playlistArray.begin(); itr != playlistArray.end();) {
+            if (*itr == nullptr)
+                itr = playlistArray.erase(itr);
+            else
+                itr++;
         }
         return playlistArray;
     }
@@ -485,11 +486,11 @@ namespace PlaylistCore {
     }
 
     void RemovePlaylistFilters(modloader::ModInfo mod) {
-        for (auto itr = playlistFilters.begin(); itr != playlistFilters.end(); itr++) {
-            if (itr->first.id == mod.id && itr->first.version == mod.version) {
-                playlistFilters.erase(itr);
-                itr--;
-            }
+        for (auto itr = playlistFilters.begin(); itr != playlistFilters.end();) {
+            if (itr->first.id == mod.id && itr->first.version == mod.version)
+                itr = playlistFilters.erase(itr);
+            else
+                itr++;
         }
     }
 
