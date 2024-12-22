@@ -39,9 +39,16 @@ jobs:
 
           restore: true
           cache: true
-          version: "${{ github.event.inputs.version }}"
+          version: ${{ github.event.inputs.version }}
 
-          publish: false
+          publish: late
+          publish_token: ${{ secrets.QPM_KEY }}
+          tag: v${{ github.event.inputs.version }}
+
+          qpm_release_bin: true
+          qpm_debug_bin: false
+
+          qpm_qmod: ${{ env.qmodName }}.qmod
 
       - name: List Post Restore
         run: |
@@ -79,20 +86,3 @@ jobs:
             ./${{ env.qmodName }}.qmod
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: QPM Publish
-        uses: Fernthedev/qpm-action@v1
-        with:
-          workflow_token: ${{ secrets.GITHUB_TOKEN }}
-
-          restore: false
-
-          eager_publish: true
-          publish_token: ${{ secrets.QPM_KEY }}
-          tag: v${{ github.event.inputs.version }}
-          version: "${{ github.event.inputs.version }}"
-
-          qpm_release_bin: true
-          qpm_debug_bin: false
-
-          qpm_qmod: ${{ env.qmodName }}.qmod
