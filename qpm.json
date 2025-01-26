@@ -5,7 +5,7 @@
   "info": {
     "name": "PlaylistCore",
     "id": "playlistcore",
-    "version": "1.4.3",
+    "version": "1.4.4",
     "url": "https://github.com/Metalit/PlaylistCore",
     "additionalData": {
       "overrideSoName": "libplaylistcore.so"
@@ -14,20 +14,20 @@
   "workspace": {
     "scripts": {
       "build": [
-        "pwsh ./scripts/build.ps1"
+        "pwsh ./scripts/build.ps1 $0?"
       ],
       "copy": [
-        "pwsh ./scripts/copy.ps1",
+        "pwsh ./scripts/copy.ps1 $0:?",
         "pwsh ./scripts/restart-game.ps1"
       ],
       "load": [
         "pwsh ./scripts/restore-backup.ps1"
       ],
       "log": [
-        "pwsh ./scripts/start-logging.ps1 $0:?"
+        "pwsh ./scripts/start-logging.ps1 $0:"
       ],
       "qmod": [
-        "pwsh ./scripts/build.ps1",
+        "pwsh ./scripts/build.ps1 $0?",
         "pwsh ./scripts/createqmod.ps1"
       ],
       "restart": [
@@ -37,7 +37,7 @@
         "pwsh ./scripts/get-backup.ps1"
       ],
       "stack": [
-        "pwsh ./scripts/ndk-stack.ps1 $0"
+        "pwsh ./scripts/ndk-stack.ps1 $0?"
       ],
       "tomb": [
         "pwsh ./scripts/pull-tombstone.ps1 -analyze"
@@ -50,35 +50,31 @@
   "dependencies": [
     {
       "id": "beatsaber-hook",
-      "versionRange": "^5.1.9",
-      "additionalData": {
-        "extraFiles": [
-          "src/inline-hook"
-        ]
-      }
+      "versionRange": "^6.0.0",
+      "additionalData": {}
     },
     {
       "id": "bs-cordl",
-      "versionRange": "^3700.0.0",
+      "versionRange": "^4000.2.0",
       "additionalData": {}
     },
     {
       "id": "bsml",
-      "versionRange": "^0.4.26",
+      "versionRange": "^0.4.47",
       "additionalData": {
         "private": true
       }
     },
     {
       "id": "custom-types",
-      "versionRange": "^0.17.10",
+      "versionRange": "^0.18.2",
       "additionalData": {
         "private": true
       }
     },
     {
       "id": "scotland2",
-      "versionRange": "^0.1.4",
+      "versionRange": "^0.1.6",
       "additionalData": {
         "includeQmod": false,
         "private": true
@@ -86,22 +82,17 @@
     },
     {
       "id": "rapidjson-macros",
-      "versionRange": "^1.2.1",
+      "versionRange": "^2.0.0",
       "additionalData": {}
     },
     {
       "id": "config-utils",
-      "versionRange": "^1.4.2",
+      "versionRange": "^2.0.0",
       "additionalData": {}
     },
     {
       "id": "songcore",
-      "versionRange": "^1.1.14",
-      "additionalData": {}
-    },
-    {
-      "id": "paper",
-      "versionRange": "^3.6.1",
+      "versionRange": "^1.1.17",
       "additionalData": {}
     },
     {
@@ -111,7 +102,12 @@
     },
     {
       "id": "beatsaverplusplus",
-      "versionRange": "^0.1.6",
+      "versionRange": "^0.2.0",
+      "additionalData": {}
+    },
+    {
+      "id": "paper2_scotland2",
+      "versionRange": "^4.4.2",
       "additionalData": {}
     }
   ]

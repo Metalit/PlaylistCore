@@ -616,7 +616,7 @@ namespace PlaylistCore {
             bool hasSong = false;
             // search in songs in playlist instead of all songs
             // we need to treat the list as an array because it is initialized as an array elsewhere
-            ArrayW<BeatmapLevel*> levelList(playlist->playlistCS->beatmapLevels);
+            ArrayW<BeatmapLevel*> levelList(playlist->playlistCS->_beatmapLevels);
             for (int i = 0; i < levelList.size(); i++) {
                 if (CaseInsensitiveEquals(id, levelList[i]->levelID)) {
                     hasSong = true;
@@ -668,7 +668,7 @@ namespace PlaylistCore {
         for (auto& song : playlist->playlistJSON.Songs) {
             bool hasSong = false;
             // same as PlaylistHasMissingSongs
-            ArrayW<BeatmapLevel*> levelList(playlist->playlistCS->beatmapLevels);
+            ArrayW<BeatmapLevel*> levelList(playlist->playlistCS->_beatmapLevels);
             for (int i = 0; i < levelList.size(); i++) {
                 if (CaseInsensitiveEquals(song.LevelID, levelList[i]->levelID)) {
                     hasSong = true;
@@ -756,7 +756,7 @@ namespace PlaylistCore {
         auto& pack = playlist->playlistCS;
         if (!pack)
             return;
-        ArrayW<BeatmapLevel*> levelList(pack->beatmapLevels);
+        ArrayW<BeatmapLevel*> levelList(pack->_beatmapLevels);
         ArrayW<BeatmapLevel*> newLevels(levelList.size() + 1);
         for (int i = 0; i < levelList.size(); i++) {
             auto currentLevel = levelList[i];
@@ -766,7 +766,7 @@ namespace PlaylistCore {
         }
         newLevels[levelList.size()] = level;
 
-        pack->beatmapLevels = newLevels;
+        pack->_beatmapLevels = newLevels;
         // update json object
         auto& json = playlist->playlistJSON;
         // add a blank song
@@ -786,7 +786,7 @@ namespace PlaylistCore {
         auto& pack = playlist->playlistCS;
         if (!pack)
             return;
-        ArrayW<BeatmapLevel*> levelList(pack->beatmapLevels);
+        ArrayW<BeatmapLevel*> levelList(pack->_beatmapLevels);
         if (levelList.size() == 0)
             return;
         ArrayW<BeatmapLevel*> newLevels(levelList.size() - 1);
@@ -806,7 +806,7 @@ namespace PlaylistCore {
             return;
         }
 
-        pack->beatmapLevels = newLevels;
+        pack->_beatmapLevels = newLevels;
         // update json object
         auto& json = playlist->playlistJSON;
         // find song by id and remove
@@ -834,7 +834,7 @@ namespace PlaylistCore {
         auto& pack = playlist->playlistCS;
         if (!pack)
             return;
-        ArrayW<BeatmapLevel*> levelList(pack->beatmapLevels);
+        ArrayW<BeatmapLevel*> levelList(pack->_beatmapLevels);
         if (index >= levelList.size() || index < 0)
             return;
         ArrayW<BeatmapLevel*> newLevels(levelList.size());
@@ -856,7 +856,7 @@ namespace PlaylistCore {
             j++;
         }
         if (found) {
-            pack->beatmapLevels = newLevels;
+            pack->_beatmapLevels = newLevels;
         } else {
             LOG_ERROR("Could not find song to be moved!");
             return;
