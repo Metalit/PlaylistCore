@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/QuestPackageManager/QPM.Package/refs/heads/main/qpm.shared.schema.json",
   "config": {
     "version": "0.1.0",
     "sharedDir": "shared",
@@ -9,7 +10,8 @@
       "version": "1.4.4",
       "url": "https://github.com/Metalit/PlaylistCore",
       "additionalData": {
-        "overrideSoName": "libplaylistcore.so"
+        "overrideSoName": "libplaylistcore.so",
+        "cmake": true
       }
     },
     "workspace": {
@@ -51,20 +53,30 @@
     "dependencies": [
       {
         "id": "beatsaber-hook",
-        "versionRange": "^6.0.0",
+        "versionRange": "^6.4.0",
+        "additionalData": {}
+      },
+      {
+        "id": "beatsaverplusplus",
+        "versionRange": "^0.2.1",
         "additionalData": {}
       },
       {
         "id": "bs-cordl",
-        "versionRange": "^4000.2.0",
+        "versionRange": "4020.*",
         "additionalData": {}
       },
       {
         "id": "bsml",
-        "versionRange": "^0.4.47",
+        "versionRange": "^0.4.49",
         "additionalData": {
           "private": true
         }
+      },
+      {
+        "id": "config-utils",
+        "versionRange": "^2.0.2",
+        "additionalData": {}
       },
       {
         "id": "custom-types",
@@ -72,6 +84,16 @@
         "additionalData": {
           "private": true
         }
+      },
+      {
+        "id": "paper2_scotland2",
+        "versionRange": "^4.5.0",
+        "additionalData": {}
+      },
+      {
+        "id": "rapidjson-macros",
+        "versionRange": "^2.0.2",
+        "additionalData": {}
       },
       {
         "id": "scotland2",
@@ -82,33 +104,13 @@
         }
       },
       {
-        "id": "rapidjson-macros",
-        "versionRange": "^2.0.0",
-        "additionalData": {}
-      },
-      {
-        "id": "config-utils",
-        "versionRange": "^2.0.0",
-        "additionalData": {}
-      },
-      {
         "id": "songcore",
-        "versionRange": "^1.1.17",
+        "versionRange": "^1.1.18",
         "additionalData": {}
       },
       {
         "id": "web-utils",
-        "versionRange": "^0.6.5",
-        "additionalData": {}
-      },
-      {
-        "id": "beatsaverplusplus",
-        "versionRange": "^0.2.0",
-        "additionalData": {}
-      },
-      {
-        "id": "paper2_scotland2",
-        "versionRange": "^4.4.2",
+        "versionRange": "^0.6.7",
         "additionalData": {}
       }
     ]
@@ -144,17 +146,17 @@
     {
       "dependency": {
         "id": "bsml",
-        "versionRange": "=0.4.47",
+        "versionRange": "=0.4.49",
         "additionalData": {
-          "soLink": "https://github.com/bsq-ports/Quest-BSML/releases/download/v0.4.47/libbsml.so",
-          "debugSoLink": "https://github.com/bsq-ports/Quest-BSML/releases/download/v0.4.47/debug_libbsml.so",
+          "soLink": "https://github.com/bsq-ports/Quest-BSML/releases/download/v0.4.49/libbsml.so",
+          "debugSoLink": "https://github.com/bsq-ports/Quest-BSML/releases/download/v0.4.49/debug_libbsml.so",
           "overrideSoName": "libbsml.so",
-          "modLink": "https://github.com/bsq-ports/Quest-BSML/releases/download/v0.4.47/BSML.qmod",
-          "branchName": "version/v0_4_47",
+          "modLink": "https://github.com/bsq-ports/Quest-BSML/releases/download/v0.4.49/BSML.qmod",
+          "branchName": "version/v0_4_49",
           "cmake": true
         }
       },
-      "version": "0.4.47"
+      "version": "0.4.49"
     },
     {
       "dependency": {
@@ -175,17 +177,13 @@
     {
       "dependency": {
         "id": "songcore",
-        "versionRange": "=1.1.17",
+        "versionRange": "=1.1.18",
         "additionalData": {
-          "soLink": "https://github.com/raineaeternal/Quest-SongCore/releases/download/v1.1.17/libsongcore.so",
-          "debugSoLink": "https://github.com/raineaeternal/Quest-SongCore/releases/download/v1.1.17/debug_libsongcore.so",
           "overrideSoName": "libsongcore.so",
-          "modLink": "https://github.com/raineaeternal/Quest-SongCore/releases/download/v1.1.17/SongCore.qmod",
-          "branchName": "version/v1_1_17",
           "cmake": true
         }
       },
-      "version": "1.1.17"
+      "version": "1.1.18"
     },
     {
       "dependency": {
@@ -205,12 +203,12 @@
     {
       "dependency": {
         "id": "paper2_scotland2",
-        "versionRange": "=4.4.2",
+        "versionRange": "=4.5.0",
         "additionalData": {
-          "soLink": "https://github.com/Fernthedev/paperlog/releases/download/v4.4.2/libpaper2_scotland2.so",
+          "soLink": "https://github.com/Fernthedev/paperlog/releases/download/v4.5.0/libpaper2_scotland2.so",
           "overrideSoName": "libpaper2_scotland2.so",
-          "modLink": "https://github.com/Fernthedev/paperlog/releases/download/v4.4.2/paper2_scotland2.qmod",
-          "branchName": "version/v4_4_2",
+          "modLink": "https://github.com/Fernthedev/paperlog/releases/download/v4.5.0/paper2_scotland2.qmod",
+          "branchName": "version/v4_5_0",
           "compileOptions": {
             "systemIncludes": [
               "shared/utfcpp/source"
@@ -219,7 +217,7 @@
           "cmake": false
         }
       },
-      "version": "4.4.2"
+      "version": "4.5.0"
     },
     {
       "dependency": {
@@ -258,10 +256,10 @@
     {
       "dependency": {
         "id": "bs-cordl",
-        "versionRange": "=4000.2.0",
+        "versionRange": "=4020.0.0",
         "additionalData": {
           "headersOnly": true,
-          "branchName": "version/v4000_2_0",
+          "branchName": "version/v4020_0_0",
           "compileOptions": {
             "includePaths": [
               "include"
@@ -277,7 +275,7 @@
           }
         }
       },
-      "version": "4000.2.0"
+      "version": "4020.0.0"
     },
     {
       "dependency": {
