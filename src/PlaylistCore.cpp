@@ -766,7 +766,7 @@ namespace PlaylistCore {
         }
         newLevels[levelList.size()] = level;
 
-        pack->_beatmapLevels = newLevels;
+        pack->SetLevels(newLevels);
         // update json object
         auto& json = playlist->playlistJSON;
         // add a blank song
@@ -806,7 +806,7 @@ namespace PlaylistCore {
             return;
         }
 
-        pack->_beatmapLevels = newLevels;
+        pack->SetLevels(newLevels);
         // update json object
         auto& json = playlist->playlistJSON;
         // find song by id and remove
@@ -856,7 +856,7 @@ namespace PlaylistCore {
             j++;
         }
         if (found) {
-            pack->_beatmapLevels = newLevels;
+            pack->SetLevels(newLevels);
         } else {
             LOG_ERROR("Could not find song to be moved!");
             return;
