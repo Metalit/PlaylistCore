@@ -5,12 +5,11 @@
 #include "HMUI/EventSystemListener.hpp"
 #include "Main.hpp"
 #include "ResettableStaticPtr.hpp"
-#include "System/Action_1.hpp"
 #include "Types/Config.hpp"
 #include "UnityEngine/GameObject.hpp"
 #include "UnityEngine/Rect.hpp"
 #include "UnityEngine/Time.hpp"
-#include "custom-types/shared/delegate.hpp"
+#include "metacore/shared/delegates.hpp"
 
 // a scroller in multiple ways specialized for the playlist grid
 // however, it could likely be made more versatile with a few changes
@@ -19,7 +18,7 @@
 DEFINE_TYPE(PlaylistCore, Scroller);
 
 #define ACTION_1(type, methodname) \
-    custom_types::MakeDelegate<System::Action_1<type>*>((std::function<void(type)>) [this](type arg) { if(this->cachedPtr == this) methodname(arg); })
+    MetaCore::Delegates::MakeSystemAction([this](type arg) { if(this->cachedPtr == this) methodname(arg); })
 
 using namespace PlaylistCore;
 

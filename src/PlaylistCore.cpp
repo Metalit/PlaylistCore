@@ -1,10 +1,5 @@
 #include "PlaylistCore.hpp"
 
-#include <filesystem>
-#include <fstream>
-#include <map>
-#include <thread>
-
 #include "GlobalNamespace/BeatmapLevel.hpp"
 #include "GlobalNamespace/CustomLevelLoader.hpp"
 #include "Main.hpp"
@@ -24,6 +19,9 @@
 #include "beatsaber-hook/shared/utils/il2cpp-utils.hpp"
 #include "beatsaverplusplus/shared/BeatSaver.hpp"
 #include "bsml/shared/BSML/MainThreadScheduler.hpp"
+#include "metacore/shared/songs.hpp"
+#include "metacore/shared/strings.hpp"
+#include "metacore/shared/unity.hpp"
 #include "songcore/shared/SongCore.hpp"
 
 using namespace SongCore;
@@ -113,7 +111,7 @@ namespace PlaylistCore {
             std::string playlistPathName = std::filesystem::path(playlist->path).stem();
             std::string imgPath = GetCoversPath() + "/" + playlistPathName + ".png";
             LOG_INFO("Writing image from playlist to {}", imgPath);
-            WriteImageToFile(imgPath, texture);
+            MetaCore::Unity::WriteTexture(texture, imgPath);
             auto sprite = UnityEngine::Sprite::Create(
                 texture,
                 UnityEngine::Rect(0, 0, texture->get_width(), texture->get_height()),
@@ -171,7 +169,7 @@ namespace PlaylistCore {
         else
             path = fileName;
         // sanitize file name
-        path = SanitizeFileName(path);
+        path = MetaCore::Strings::SanitizedPath(path);
         if (!path.ends_with(".png"))
             path += ".png";
         while (!UniqueFileName(path, GetCoversPath()))
@@ -180,7 +178,7 @@ namespace PlaylistCore {
         path = GetCoversPath() + "/" + path;
         LOG_INFO("Saving image {}", path);
         // save and load
-        WriteImageToFile(path, texture);
+        MetaCore::Unity::WriteTexture(texture, path);
         auto sprite = UnityEngine::Sprite::Create(
             texture,
             UnityEngine::Rect(0, 0, texture->get_width(), texture->get_height()),
@@ -238,7 +236,7 @@ namespace PlaylistCore {
                 }
                 std::string newImageString = ProcessImage(texture, true);
                 if (newImageString != imageString)
-                    WriteImageToFile(path.string(), texture);
+                    MetaCore::Unity::WriteTexture(texture, path.string());
                 // check hash with loaded images
                 if (HasCachedSprite(newImageString)) {
                     LOG_INFO("Skipping loading image {}", path.string());
@@ -359,14 +357,14 @@ namespace PlaylistCore {
                                 itr = songs.erase(itr);
                             else {
                                 levelIds.insert(itr->LevelID);
-                                if (auto search = Utils::GetLevelByID(itr->LevelID))
+                                if (auto search = MetaCore::Songs::FindLevel(itr->LevelID))
                                     foundSongs.emplace_back(search);
                                 else if (itr->Hash) {
                                     LOG_INFO("level id {} not found, attempting to use hash", itr->LevelID);
-                                    if (auto search = Utils::GetLevelByID(*itr->Hash)) {
+                                    if (auto search = MetaCore::Songs::FindLevel(*itr->Hash)) {
                                         // fix levelid and hash
                                         itr->LevelID = *itr->Hash;
-                                        itr->Hash = Utils::GetLevelHash(itr->LevelID);
+                                        itr->Hash = MetaCore::Songs::GetHash(itr->LevelID);
                                         if (itr->Hash->empty())
                                             itr->Hash = std::nullopt;
                                         foundSongs.emplace_back(search);
@@ -618,7 +616,7 @@ namespace PlaylistCore {
             // we need to treat the list as an array because it is initialized as an array elsewhere
             ArrayW<BeatmapLevel*> levelList(playlist->playlistCS->_beatmapLevels);
             for (int i = 0; i < levelList.size(); i++) {
-                if (CaseInsensitiveEquals(id, levelList[i]->levelID)) {
+                if (MetaCore::Strings::IEquals(id, levelList[i]->levelID)) {
                     hasSong = true;
                     break;
                 }
@@ -638,10 +636,10 @@ namespace PlaylistCore {
             std::optional<BeatSaver::Models::Beatmap> foundMap = std::nullopt;
             for (auto& [key, map] : *targetResponse.responseData) {
                 for (auto& version : map.Versions) {
-                    if (CaseInsensitiveEquals(version.Hash, hash))
+                    if (MetaCore::Strings::IEquals(version.Hash, hash))
                         return {map, version};
                 }
-                if (CaseInsensitiveEquals(key, hash))
+                if (MetaCore::Strings::IEquals(key, hash))
                     foundMap = map;
             }
             if (foundMap)
@@ -670,13 +668,13 @@ namespace PlaylistCore {
             // same as PlaylistHasMissingSongs
             ArrayW<BeatmapLevel*> levelList(playlist->playlistCS->_beatmapLevels);
             for (int i = 0; i < levelList.size(); i++) {
-                if (CaseInsensitiveEquals(song.LevelID, levelList[i]->levelID)) {
+                if (MetaCore::Strings::IEquals(song.LevelID, levelList[i]->levelID)) {
                     hasSong = true;
                     break;
                 }
             }
             if (!hasSong)
-                songsToGet.emplace_back(Utils::GetLevelHash(song.LevelID));
+                songsToGet.emplace_back(MetaCore::Songs::GetHash(song.LevelID));
         }
 
         if (songsToGet.empty()) {
@@ -737,7 +735,7 @@ namespace PlaylistCore {
         // store exisiting songs in a new vector to replace the song list with
         std::vector<BPSong> existingSongs = {};
         for (auto& song : playlist->playlistJSON.Songs) {
-            if (Utils::GetLevelByID(song.LevelID))
+            if (MetaCore::Songs::FindLevel(song.LevelID))
                 existingSongs.push_back(song);
             else if (song.SongName.has_value())
                 LOG_INFO("Removing song {} from playlist {}", song.SongName.value(), playlist->name);
@@ -772,7 +770,7 @@ namespace PlaylistCore {
         // add a blank song
         auto& songJson = json.Songs.emplace_back();
         // set info
-        songJson.Hash = GetLevelHash(level);
+        songJson.Hash = MetaCore::Songs::GetHash(level);
         songJson.LevelID = (std::string) level->levelID;
         songJson.SongName = level->songName;
         // write to file
@@ -812,7 +810,7 @@ namespace PlaylistCore {
         // find song by id and remove
         for (auto itr = json.Songs.begin(); itr != json.Songs.end(); ++itr) {
             auto& song = *itr;
-            if (CaseInsensitiveEquals(song.LevelID, level->levelID)) {
+            if (MetaCore::Strings::IEquals(song.LevelID, level->levelID)) {
                 json.Songs.erase(itr);
                 // only erase
                 break;
@@ -869,9 +867,9 @@ namespace PlaylistCore {
         int replacedLevelIndex = -1;
         for (int i = 0; i < songs.size(); i++) {
             auto& song = songs[i];
-            if (CaseInsensitiveEquals(song.LevelID, levelList[i]->levelID))
+            if (MetaCore::Strings::IEquals(song.LevelID, levelList[i]->levelID))
                 removeIndex = i;
-            if (CaseInsensitiveEquals(song.LevelID, replacedLevelID))
+            if (MetaCore::Strings::IEquals(song.LevelID, replacedLevelID))
                 replacedLevelIndex = i;
             if (removeIndex >= 0 && replacedLevelIndex >= 0)
                 break;

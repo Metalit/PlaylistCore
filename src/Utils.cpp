@@ -24,6 +24,7 @@
 #include "UnityEngine/GameObject.hpp"
 #include "UnityEngine/ImageConversion.hpp"
 #include "UnityEngine/RectTransform.hpp"
+#include "metacore/shared/strings.hpp"
 #include "songcore/shared/SongCore.hpp"
 #include "songcore/shared/SongLoader/RuntimeSongLoader.hpp"
 
@@ -32,43 +33,7 @@ namespace PlaylistCore {
     namespace Utils {
 
         // desired image size
-        int const imageSize = 512;
-
-        bool CaseInsensitiveEquals(std::string const& a, std::string const& b) {
-            if (a.size() != b.size())
-                return false;
-            for (int i = 0; i < a.size(); i++) {
-                if (tolower(a[i]) != tolower(b[i]))
-                    return false;
-            }
-            return true;
-        }
-
-        GlobalNamespace::BeatmapLevel* GetLevelByID(std::string id) {
-            if (auto search = SongCore::API::Loading::GetLevelByLevelID(id))
-                return search;
-            else if (auto instance = SongCore::SongLoader::RuntimeSongLoader::get_instance())
-                return (*il2cpp_utils::GetFieldValue<GlobalNamespace::BeatmapLevelsModel*>(instance, "_beatmapLevelsModel"))->GetBeatmapLevel(id);
-            return nullptr;
-        }
-
-        std::string GetLevelHash(std::string id) {
-            // should be in all songloader levels
-            auto prefixIndex = id.find("custom_level_");
-            if (prefixIndex == std::string::npos)
-                return "";
-            // remove prefix
-            id = id.substr(prefixIndex + 13);
-            auto wipIndex = id.find(" WIP");
-            if (wipIndex != std::string::npos)
-                id = id.substr(0, wipIndex);
-            LOWER(id);
-            return id;
-        }
-
-        std::string GetLevelHash(GlobalNamespace::BeatmapLevel* level) {
-            return GetLevelHash(level->levelID);
-        }
+        static constexpr int imageSize = 512;
 
         bool IsWipLevel(GlobalNamespace::BeatmapLevel* level) {
             return level->levelID.ends_with(" WIP");
@@ -84,26 +49,6 @@ namespace PlaylistCore {
             }
         }
 
-        std::string SanitizeFileName(std::string_view fileName) {
-            std::string newName;
-            // just whitelist simple characters
-            static auto const okChar = [](unsigned char c) {
-                if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9'))
-                    return true;
-                if (c == '_' || c == '-' || c == '.' || c == '(' || c == ')')
-                    return true;
-                return false;
-            };
-            std::transform(fileName.begin(), fileName.end(), std::back_inserter(newName), [](unsigned char c) {
-                if (!okChar(c))
-                    return (unsigned char) ('_');
-                return c;
-            });
-            if (newName == "")
-                return "_";
-            return newName;
-        }
-
         bool UniqueFileName(std::string_view fileName, std::string_view compareDirectory) {
             if (!std::filesystem::is_directory(compareDirectory))
                 return true;
@@ -116,8 +61,8 @@ namespace PlaylistCore {
             return true;
         }
 
-        std::string GetNewPlaylistPath(std::string_view title) {
-            std::string fileTitle = SanitizeFileName(title);
+        std::string GetNewPlaylistPath(std::string title) {
+            std::string fileTitle = MetaCore::Strings::SanitizedPath(title);
             while (!UniqueFileName(fileTitle + ".bplist", GetPlaylistsPath()))
                 fileTitle = "_" + fileTitle;
             return GetPlaylistsPath() + "/" + fileTitle + ".bplist";
@@ -173,11 +118,6 @@ namespace PlaylistCore {
             // and it shouldn't be a problem through ingame cover management
             auto bytes = UnityEngine::ImageConversion::EncodeToPNG(texture);
             return System::Convert::ToBase64String(bytes);
-        }
-
-        void WriteImageToFile(std::string_view pathToPng, UnityEngine::Texture2D* texture) {
-            auto bytes = UnityEngine::ImageConversion::EncodeToPNG(texture);
-            writefile(pathToPng, std::string((char*) bytes.begin(), bytes.size()));
         }
     }
 }
