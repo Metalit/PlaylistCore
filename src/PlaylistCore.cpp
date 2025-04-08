@@ -200,6 +200,7 @@ namespace PlaylistCore {
     void LoadCoverImages() {
         // ensure path exists
         auto imagePath = GetCoversPath();
+        LOG_INFO("Loading cover images from {}", imagePath.c_str());
         if (!std::filesystem::is_directory(imagePath))
             return;
         // iterate through all image files
@@ -219,10 +220,41 @@ namespace PlaylistCore {
                 }
                 // check hash of base image before converting to sprite and to png
                 std::ifstream instream(path, std::ios::in | std::ios::binary | std::ios::ate);
+                if (!instream.is_open()) {
+                    LOG_ERROR("Failed to open file: {}", path.string());
+                    instream.close();
+
+                    return;
+                }
                 auto size = instream.tellg();
+                if (size <= 0) {
+                    LOG_ERROR("Invalid file size: {}", path.string());
+                    instream.close();
+
+                    return;
+                }
                 instream.seekg(0, instream.beg);
+                if (!instream) {
+                    LOG_ERROR("Failed to seek in file: {}", path.string());
+                    instream.close();
+
+                    return;
+                }
                 auto bytes = Array<uint8_t>::NewLength(size);
+                if (!bytes) {
+                    LOG_ERROR("Failed to allocate memory for file: {}", path.string());
+                    instream.close();
+
+                    return;
+                }
                 instream.read(reinterpret_cast<char*>(bytes->_values), size);
+                if (!instream) {
+                    LOG_ERROR("Failed to read file: {}", path.string());
+                    instream.close();
+
+                    return;
+                }
+                instream.close();
                 std::string imageString = System::Convert::ToBase64String(bytes);
                 if (HasCachedSprite(imageString)) {
                     LOG_INFO("Skipping loading image {}", path.string());
