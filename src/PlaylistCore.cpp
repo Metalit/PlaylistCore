@@ -221,6 +221,7 @@ namespace PlaylistCore {
                 instream.seekg(0, instream.beg);
                 auto bytes = Array<uint8_t>::NewLength(size);
                 instream.read(reinterpret_cast<char*>(bytes->_values), size);
+                instream.close();
                 std::string imageString = System::Convert::ToBase64String(bytes);
                 if (HasCachedSprite(imageString)) {
                     LOG_INFO("Skipping loading image {}", path.string());
@@ -273,8 +274,8 @@ namespace PlaylistCore {
     void LoadPlaylists(CustomBeatmapLevelsRepository* customBeatmapLevelsRepository, bool fullReload) {
         LOG_INFO("Loading playlists");
         RemoveAllBMBFSuffixes();
-        LoadCoverImages(
-        );  // can be laggy depending on the number of images, but generally only loads a lot on launch when the screen is black anyway
+        // can be laggy depending on the number of images, but generally only loads a lot on launch when the screen is black anyway
+        LoadCoverImages();
         // clear playlists if requested
         if (fullReload) {
             for (auto& pair : path_playlists)

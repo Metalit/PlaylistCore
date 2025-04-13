@@ -231,7 +231,7 @@ MAKE_HOOK_MATCH(
 }
 
 // override to prevent crashes due to opening with a null level pack
-#define COMBINE(delegate1, selfMethodName, ...) delegate1 = (__VA_ARGS__) System::Delegate::Combine(delegate1, System::Delegate::CreateDelegate(csTypeOf(__VA_ARGS__), self, #selfMethodName));
+#define COMBINE(delegate1, selfMethodName, ...) delegate1 = (std::decay_t<decltype(delegate1)>) System::Delegate::Combine(delegate1, System::Delegate::CreateDelegate(csTypeOf(std::decay_t<decltype(delegate1)>), self, #selfMethodName));
 MAKE_HOOK_MATCH(
     LevelCollectionNavigationController_DidActivate,
     &LevelCollectionNavigationController::DidActivate,
@@ -242,14 +242,14 @@ MAKE_HOOK_MATCH(
     bool screenSystemEnabling
 ) {
     if (addedToHierarchy) {
-        COMBINE(self->_levelCollectionViewController->didSelectLevelEvent, HandleLevelCollectionViewControllerDidSelectLevel, System::Action_2<UnityW<LevelCollectionViewController>, BeatmapLevel*>*);
-        COMBINE(self->_levelCollectionViewController->didSelectHeaderEvent, HandleLevelCollectionViewControllerDidSelectPack, System::Action_1<UnityW<LevelCollectionViewController>>*);
-        COMBINE(self->_levelDetailViewController->didPressActionButtonEvent, HandleLevelDetailViewControllerDidPressActionButton, System::Action_1<UnityW<StandardLevelDetailViewController>>*);
-        COMBINE(self->_levelDetailViewController->didPressPracticeButtonEvent, HandleLevelDetailViewControllerDidPressPracticeButton, System::Action_2<UnityW<StandardLevelDetailViewController>, BeatmapLevel*>*);
-        COMBINE(self->_levelDetailViewController->didChangeDifficultyBeatmapEvent, HandleLevelDetailViewControllerDidChangeDifficultyBeatmap, System::Action_1<UnityW<StandardLevelDetailViewController>>*);
-        COMBINE(self->_levelDetailViewController->didChangeContentEvent, HandleLevelDetailViewControllerDidPresentContent, System::Action_2<UnityW<StandardLevelDetailViewController>, StandardLevelDetailViewController::ContentType>*);
-        COMBINE(self->_levelDetailViewController->didPressOpenLevelPackButtonEvent, HandleLevelDetailViewControllerDidPressOpenLevelPackButton, System::Action_2<UnityW<StandardLevelDetailViewController>, BeatmapLevelPack*>*);
-        COMBINE(self->_levelDetailViewController->levelFavoriteStatusDidChangeEvent, HandleLevelDetailViewControllerLevelFavoriteStatusDidChange, System::Action_2<UnityW<StandardLevelDetailViewController>, bool>*);
+        COMBINE(self->_levelCollectionViewController->didSelectLevelEvent, HandleLevelCollectionViewControllerDidSelectLevel);
+        COMBINE(self->_levelCollectionViewController->didSelectHeaderEvent, HandleLevelCollectionViewControllerDidSelectPack);
+        COMBINE(self->_levelDetailViewController->didPressActionButtonEvent, HandleLevelDetailViewControllerDidPressActionButton);
+        COMBINE(self->_levelDetailViewController->didPressPracticeButtonEvent, HandleLevelDetailViewControllerDidPressPracticeButton);
+        COMBINE(self->_levelDetailViewController->didChangeDifficultyBeatmapEvent, HandleLevelDetailViewControllerDidChangeDifficultyBeatmap);
+        COMBINE(self->_levelDetailViewController->didChangeContentEvent, HandleLevelDetailViewControllerDidPresentContent);
+        COMBINE(self->_levelDetailViewController->didPressOpenLevelPackButtonEvent, HandleLevelDetailViewControllerDidPressOpenLevelPackButton);
+        COMBINE(self->_levelDetailViewController->levelFavoriteStatusDidChangeEvent, HandleLevelDetailViewControllerLevelFavoriteStatusDidChange);
         if (self->_beatmapLevelToBeSelectedAfterPresent) {
             self->_levelCollectionViewController->SelectLevel(self->_beatmapLevelToBeSelectedAfterPresent);
             self->SetChildViewController(self->_levelCollectionViewController);
@@ -273,9 +273,9 @@ MAKE_HOOK_MATCH(
 }
 
 extern "C" void setup(CModInfo* info) {
-    info->id = "PlaylistCore";
-    info->version = VERSION;
-    info->version_long = 0;
+    *info = modInfo.to_c();
+
+    Paper::Logger::RegisterFileContextId(MOD_ID);
 
     auto playlistsPath = GetPlaylistsPath();
     if (!direxists(playlistsPath))
