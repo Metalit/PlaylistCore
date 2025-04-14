@@ -111,7 +111,7 @@ namespace PlaylistCore {
             std::string playlistPathName = std::filesystem::path(playlist->path).stem();
             std::string imgPath = GetCoversPath() + "/" + playlistPathName + ".png";
             LOG_INFO("Writing image from playlist to {}", imgPath);
-            MetaCore::Unity::WriteTexture(texture, imgPath);
+            MetaCore::Engine::WriteTexture(texture, imgPath);
             auto sprite = UnityEngine::Sprite::Create(
                 texture,
                 UnityEngine::Rect(0, 0, texture->get_width(), texture->get_height()),
@@ -178,7 +178,7 @@ namespace PlaylistCore {
         path = GetCoversPath() + "/" + path;
         LOG_INFO("Saving image {}", path);
         // save and load
-        MetaCore::Unity::WriteTexture(texture, path);
+        MetaCore::Engine::WriteTexture(texture, path);
         auto sprite = UnityEngine::Sprite::Create(
             texture,
             UnityEngine::Rect(0, 0, texture->get_width(), texture->get_height()),
@@ -237,7 +237,7 @@ namespace PlaylistCore {
                 }
                 std::string newImageString = ProcessImage(texture, true);
                 if (newImageString != imageString)
-                    MetaCore::Unity::WriteTexture(texture, path.string());
+                    MetaCore::Engine::WriteTexture(texture, path.string());
                 // check hash with loaded images
                 if (HasCachedSprite(newImageString)) {
                     LOG_INFO("Skipping loading image {}", path.string());
