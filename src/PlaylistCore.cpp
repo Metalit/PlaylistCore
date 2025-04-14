@@ -7,6 +7,7 @@
 #include "Settings.hpp"
 #include "SpriteCache.hpp"
 #include "System/Convert.hpp"
+#include "System/IO/File.hpp"
 #include "Types/BPList.hpp"
 #include "Types/Config.hpp"
 #include "UnityEngine/ImageConversion.hpp"
@@ -200,64 +201,61 @@ namespace PlaylistCore {
         auto imagePath = GetCoversPath();
         if (!std::filesystem::is_directory(imagePath))
             return;
+        std::vector<std::filesystem::path> paths;
         // iterate through all image files
         for (auto const& file : std::filesystem::directory_iterator(imagePath)) {
-            if (!file.is_directory()) {
-                auto path = file.path();
-                std::string extension = path.extension().string();
-                LOWER(extension);
-                // check file extension
-                if (extension == ".jpg") {
-                    auto newPath = path.parent_path() / (path.stem().string() + ".png");
-                    std::filesystem::rename(path, newPath);
-                    path = newPath;
-                } else if (extension != ".png") {
-                    LOG_ERROR("Incompatible file extension: {}", extension);
-                    continue;
-                }
-                // check hash of base image before converting to sprite and to png
-                std::ifstream instream(path, std::ios::in | std::ios::binary | std::ios::ate);
-                auto size = instream.tellg();
-                instream.seekg(0, instream.beg);
-                auto bytes = Array<uint8_t>::NewLength(size);
-                instream.read(reinterpret_cast<char*>(bytes->_values), size);
-                instream.close();
-                std::string imageString = System::Convert::ToBase64String(bytes);
-                if (HasCachedSprite(imageString)) {
-                    LOG_INFO("Skipping loading image {}", path.string());
-                    continue;
-                }
-                // sanatize hash by converting to png
-                auto texture = UnityEngine::Texture2D::New_ctor(0, 0, UnityEngine::TextureFormat::RGBA32, false, false);
-                try {
-                    UnityEngine::ImageConversion::LoadImage(texture, bytes);
-                } catch (std::exception const& exc) {
-                    LOG_DEBUG("Error loading image: {}", exc.what());
-                    continue;
-                }
-                std::string newImageString = ProcessImage(texture, true);
-                if (newImageString != imageString)
-                    MetaCore::Engine::WriteTexture(texture, path.string());
-                // check hash with loaded images
-                if (HasCachedSprite(newImageString)) {
-                    LOG_INFO("Skipping loading image {}", path.string());
-                    continue;
-                }
-                LOG_INFO("Loading image {}", path.string());
-                auto sprite = UnityEngine::Sprite::Create(
-                    texture,
-                    UnityEngine::Rect(0, 0, texture->get_width(), texture->get_height()),
-                    {0.5, 0.5},
-                    1024,
-                    1,
-                    UnityEngine::SpriteMeshType::FullRect,
-                    {0, 0, 0, 0},
-                    false
-                );
-                CacheSprite(sprite, std::move(newImageString));
-                image_paths.insert({sprite, path});
-                loadedImages.emplace_back(sprite);
+            if (!file.is_directory())
+                paths.emplace_back(file.path());
+        }
+        for (auto path : paths) {
+            std::string extension = path.extension().string();
+            LOWER(extension);
+            // check file extension
+            if (extension == ".jpg") {
+                auto newPath = path.parent_path() / (path.stem().string() + ".png");
+                std::filesystem::rename(path, newPath);
+                path = newPath;
+            } else if (extension != ".png") {
+                LOG_ERROR("Incompatible file extension: {}", extension);
+                continue;
             }
+            // check hash of base image before converting to sprite and to png
+            auto bytes = System::IO::File::ReadAllBytes(path.string());
+            std::string imageString = System::Convert::ToBase64String(bytes);
+            if (HasCachedSprite(imageString)) {
+                LOG_INFO("Skipping loading image {}", path.string());
+                continue;
+            }
+            // sanatize hash by converting to png
+            auto texture = UnityEngine::Texture2D::New_ctor(0, 0, UnityEngine::TextureFormat::RGBA32, false, false);
+            try {
+                UnityEngine::ImageConversion::LoadImage(texture, bytes);
+            } catch (std::exception const& exc) {
+                LOG_DEBUG("Error loading image: {}", exc.what());
+                continue;
+            }
+            std::string newImageString = ProcessImage(texture, true);
+            if (newImageString != imageString)
+                MetaCore::Engine::WriteTexture(texture, path.string());
+            // check hash with loaded images
+            if (HasCachedSprite(newImageString)) {
+                LOG_INFO("Skipping loading image {}", path.string());
+                continue;
+            }
+            LOG_INFO("Loading image {}", path.string());
+            auto sprite = UnityEngine::Sprite::Create(
+                texture,
+                UnityEngine::Rect(0, 0, texture->get_width(), texture->get_height()),
+                {0.5, 0.5},
+                1024,
+                1,
+                UnityEngine::SpriteMeshType::FullRect,
+                {0, 0, 0, 0},
+                false
+            );
+            CacheSprite(sprite, std::move(newImageString));
+            image_paths.insert({sprite, path});
+            loadedImages.emplace_back(sprite);
         }
     }
 
