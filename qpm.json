@@ -5,7 +5,7 @@
   "info": {
     "name": "PlaylistCore",
     "id": "playlistcore",
-    "version": "1.5.1",
+    "version": "1.5.2",
     "url": "https://github.com/Metalit/PlaylistCore",
     "additionalData": {
       "overrideSoName": "libplaylistcore.so"
@@ -50,24 +50,24 @@
   "dependencies": [
     {
       "id": "beatsaber-hook",
-      "versionRange": "^6.4.0",
+      "versionRange": "^6.4.2",
       "additionalData": {}
     },
     {
       "id": "bs-cordl",
-      "versionRange": "^4005.0.0",
+      "versionRange": "^4006.0.0",
       "additionalData": {}
     },
     {
       "id": "bsml",
-      "versionRange": "^0.4.47",
+      "versionRange": "^0.4.53",
       "additionalData": {
         "private": true
       }
     },
     {
       "id": "custom-types",
-      "versionRange": "^0.18.2",
+      "versionRange": "^0.18.3",
       "additionalData": {}
     },
     {
@@ -79,37 +79,37 @@
     },
     {
       "id": "rapidjson-macros",
-      "versionRange": "^2.0.0",
+      "versionRange": "^2.1.0",
       "additionalData": {}
     },
     {
       "id": "config-utils",
-      "versionRange": "^2.0.0",
+      "versionRange": "^2.0.3",
       "additionalData": {}
     },
     {
       "id": "songcore",
-      "versionRange": "^1.1.19",
+      "versionRange": "^1.1.22",
       "additionalData": {}
     },
     {
       "id": "web-utils",
-      "versionRange": "^0.6.5",
+      "versionRange": "^0.6.7",
       "additionalData": {}
     },
     {
       "id": "beatsaverplusplus",
-      "versionRange": "^0.2.0",
+      "versionRange": "^0.2.1",
       "additionalData": {}
     },
     {
       "id": "paper2_scotland2",
-      "versionRange": "^4.4.2",
+      "versionRange": "^4.6.4",
       "additionalData": {}
     },
     {
       "id": "metacore",
-      "versionRange": "^1.2.2",
+      "versionRange": "^1.3.0",
       "additionalData": {}
     }
   ]
