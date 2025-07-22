@@ -865,7 +865,7 @@ namespace PlaylistCore {
         int replacedLevelIndex = -1;
         for (int i = 0; i < songs.size(); i++) {
             auto& song = songs[i];
-            if (MetaCore::Strings::IEquals(song.LevelID, levelList[i]->levelID))
+            if (MetaCore::Strings::IEquals(song.LevelID, level->levelID))
                 removeIndex = i;
             if (MetaCore::Strings::IEquals(song.LevelID, replacedLevelID))
                 replacedLevelIndex = i;
@@ -877,6 +877,7 @@ namespace PlaylistCore {
         if (!songJson.SongName.has_value())
             songJson.SongName = level->songName;
         songs.erase(songs.begin() + removeIndex);
+        // insert it such that the entry is now at the previous index of what it replaced
         songs.insert(songs.begin() + replacedLevelIndex, songJson);
         // write to file
         playlist->Save();
