@@ -1,5 +1,12 @@
 #include "Utils.hpp"
 
+#include "Main.hpp"
+#include "PlaylistCore.hpp"
+#include "ResettableStaticPtr.hpp"
+#include "metacore/shared/strings.hpp"
+#include "songcore/shared/SongCore.hpp"
+#include "songcore/shared/SongLoader/RuntimeSongLoader.hpp"
+
 #include <filesystem>
 
 #include "GlobalNamespace/AnnotatedBeatmapLevelCollectionsGridView.hpp"
@@ -14,9 +21,6 @@
 #include "GlobalNamespace/LevelSearchViewController.hpp"
 #include "GlobalNamespace/LevelSelectionFlowCoordinator.hpp"
 #include "GlobalNamespace/PageControl.hpp"
-#include "Main.hpp"
-#include "PlaylistCore.hpp"
-#include "ResettableStaticPtr.hpp"
 #include "System/Action_4.hpp"
 #include "System/Collections/Generic/IReadOnlyList_1.hpp"
 #include "System/Convert.hpp"
@@ -24,9 +28,6 @@
 #include "UnityEngine/GameObject.hpp"
 #include "UnityEngine/ImageConversion.hpp"
 #include "UnityEngine/RectTransform.hpp"
-#include "metacore/shared/strings.hpp"
-#include "songcore/shared/SongCore.hpp"
-#include "songcore/shared/SongLoader/RuntimeSongLoader.hpp"
 
 namespace PlaylistCore {
 

@@ -1,10 +1,11 @@
 #pragma once
 
+#include "custom-types/shared/macros.hpp"
+
 #include "HMUI/TableCell.hpp"
 #include "HMUI/TableView.hpp"
 #include "UnityEngine/MonoBehaviour.hpp"
 #include "UnityEngine/Sprite.hpp"
-#include "custom-types/shared/macros.hpp"
 
 DECLARE_CLASS_CODEGEN(PlaylistCore, CustomTableCell, HMUI::TableCell) {
     DECLARE_OVERRIDE_METHOD_MATCH(
@@ -36,7 +37,7 @@ DECLARE_CLASS_CODEGEN(PlaylistCore, CustomTableCell, HMUI::TableCell) {
 };
 
 DECLARE_CLASS_CODEGEN_INTERFACES(PlaylistCore, CustomListSource, UnityEngine::MonoBehaviour, HMUI::TableView::IDataSource*) {
-    DECLARE_INSTANCE_FIELD(Il2CppString*, reuseIdentifier);
+    DECLARE_INSTANCE_FIELD(StringW, reuseIdentifier);
     DECLARE_INSTANCE_FIELD(HMUI::TableView*, tableView);
 
     DECLARE_CTOR(ctor);
@@ -54,8 +55,8 @@ DECLARE_CLASS_CODEGEN_INTERFACES(PlaylistCore, CustomListSource, UnityEngine::Mo
     System::Type* type;
 
    public:
-    static void ScrollListLeft(CustomListSource * list, int numCells);
-    static void ScrollListRight(CustomListSource * list, int numCells);
+    static void ScrollListLeft(CustomListSource* list, int numCells);
+    static void ScrollListRight(CustomListSource* list, int numCells);
 
     void setType(System::Type * cellType);
     void addSprites(std::vector<UnityEngine::Sprite*> newSprites);

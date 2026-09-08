@@ -1,11 +1,12 @@
 #pragma once
 
-#include "GlobalNamespace/BeatmapLevel.hpp"
 #include "SimpleSafePtr.hpp"
-#include "Types/BPList.hpp"
-#include "UnityEngine/Sprite.hpp"
 #include "songcore/shared/SongLoader/CustomBeatmapLevelsRepository.hpp"
 #include "songcore/shared/SongLoader/CustomLevelPack.hpp"
+
+#include "GlobalNamespace/BeatmapLevel.hpp"
+#include "Types/BPList.hpp"
+#include "UnityEngine/Sprite.hpp"
 
 namespace PlaylistCore {
 

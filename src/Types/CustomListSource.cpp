@@ -31,7 +31,7 @@ HMUI::TableCell* CustomListSource::CellForIdx(HMUI::TableView* tableView, int id
         return nullptr;
     }
     // check for available reusable cells
-    CustomTableCell* reusableCell = (CustomTableCell*) tableView->DequeueReusableCellForIdentifier(reuseIdentifier).unsafePtr();
+    CustomTableCell* reusableCell = (CustomTableCell*) tableView->DequeueReusableCellForIdentifier(reuseIdentifier).unsafe_ptr();
     if (!reusableCell) {
         // create a new cell
         static ConstString name("CustomCellGameObject");

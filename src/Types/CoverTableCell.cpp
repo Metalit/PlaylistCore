@@ -1,11 +1,12 @@
 #include "CustomTypes/CoverTableCell.hpp"
 
-#include "GlobalNamespace/AnnotatedBeatmapLevelCollectionCell.hpp"
 #include "Main.hpp"
 #include "ResettableStaticPtr.hpp"
+#include "bsml/shared/BSML-Lite.hpp"
+
+#include "GlobalNamespace/AnnotatedBeatmapLevelCollectionCell.hpp"
 #include "UnityEngine/GameObject.hpp"
 #include "UnityEngine/Resources.hpp"
-#include "bsml/shared/BSML-Lite.hpp"
 
 using namespace PlaylistCore;
 using namespace BSML;
@@ -14,10 +15,7 @@ DEFINE_TYPE(PlaylistCore, CoverTableCell);
 
 // "polymorphism"
 void CoverTableCell::ctor() {
-    // run tableCell ctor
-    auto thisref = this;
-    static auto info = il2cpp_utils::FindMethodUnsafe(classof(HMUI::TableCell*), ".ctor", 0);
-    il2cpp_utils::RunMethodRethrow(thisref, info);
+    INVOKE_BASE_CTOR(i2c::class_of<HMUI::TableCell*>());
 
     refreshVisualsFunc = [this]() {
         refreshVisuals();

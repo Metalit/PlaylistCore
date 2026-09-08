@@ -1,5 +1,13 @@
 #include "Main.hpp"
 
+#include "PlaylistCore.hpp"
+#include "ResettableStaticPtr.hpp"
+#include "Settings.hpp"
+#include "beatsaber-hook/shared/hooking.hpp"
+#include "beatsaber-hook/shared/utils.hpp"
+#include "bsml/shared/BSML.hpp"
+#include "songcore/shared/SongCore.hpp"
+
 #include "GlobalNamespace/AnnotatedBeatmapLevelCollectionCell.hpp"
 #include "GlobalNamespace/AnnotatedBeatmapLevelCollectionsGridView.hpp"
 #include "GlobalNamespace/AnnotatedBeatmapLevelCollectionsGridViewAnimator.hpp"
@@ -25,9 +33,6 @@
 #include "HMUI/ScrollView.hpp"
 #include "HMUI/TableView.hpp"
 #include "HMUI/ViewController.hpp"
-#include "PlaylistCore.hpp"
-#include "ResettableStaticPtr.hpp"
-#include "Settings.hpp"
 #include "System/Action_1.hpp"
 #include "System/Action_2.hpp"
 #include "Tweening/Vector2Tween.hpp"
@@ -38,11 +43,6 @@
 #include "UnityEngine/Resources.hpp"
 #include "Zenject/DiContainer.hpp"
 #include "Zenject/StaticMemoryPool_7.hpp"
-#include "beatsaber-hook/shared/config/config-utils.hpp"
-#include "beatsaber-hook/shared/utils/hooking.hpp"
-#include "beatsaber-hook/shared/utils/il2cpp-utils.hpp"
-#include "bsml/shared/BSML.hpp"
-#include "songcore/shared/SongCore.hpp"
 
 using namespace GlobalNamespace;
 using namespace PlaylistCore;
@@ -53,12 +53,12 @@ modloader::ModInfo managerModInfo = {"PlaylistManager", VERSION, 0};
 bool hasManager;
 
 std::string GetPlaylistsPath() {
-    static std::string playlistsPath(getDataDir(managerModInfo) + "Playlists");
+    static std::string playlistsPath(get_data_dir(managerModInfo) + "Playlists");
     return playlistsPath;
 }
 
 std::string GetCoversPath() {
-    static std::string coversPath(getDataDir(managerModInfo) + "Covers");
+    static std::string coversPath(get_data_dir(managerModInfo) + "Covers");
     return coversPath;
 }
 
@@ -231,7 +231,9 @@ MAKE_HOOK_MATCH(
 }
 
 // override to prevent crashes due to opening with a null level pack
-#define COMBINE(delegate1, selfMethodName, ...) delegate1 = (std::decay_t<decltype(delegate1)>) System::Delegate::Combine(delegate1, System::Delegate::CreateDelegate(csTypeOf(std::decay_t<decltype(delegate1)>), self, #selfMethodName));
+#define COMBINE(delegate1, selfMethodName, ...) \
+    delegate1 = (std::remove_cvref_t<decltype(delegate1)>) System::Delegate::Combine(delegate1, System::Delegate::CreateDelegate(i2c::cs_type_of<std::remove_cvref_t<decltype(delegate1)>>(), self, #selfMethodName));
+
 MAKE_HOOK_MATCH(
     LevelCollectionNavigationController_DidActivate,
     &LevelCollectionNavigationController::DidActivate,
@@ -292,11 +294,10 @@ extern "C" void setup(CModInfo* info) {
 
 extern "C" void late_load() {
     LOG_INFO("Starting PlaylistCore installation...");
-    il2cpp_functions::Init();
     custom_types::Register::AutoRegister();
 
     BSML::Init();
-    BSML::Register::RegisterMenuButton("Reload Playlists", "Reloads all playlists!", [] { SongCore::API::Loading::RefreshLevelPacks(); });
+    BSML::Register::RegisterMenuButton("Reload Playlists", "Reloads all playlists!", SongCore::API::Loading::RefreshLevelPacks);
     BSML::Register::RegisterSettingsMenu<SettingsViewController*>("Playlist Core");
 
     auto managerCInfo = managerModInfo.to_c();
@@ -311,9 +312,10 @@ extern "C" void late_load() {
     INSTALL_HOOK(logger, MenuTransitionsHelper_RestartGame);
     INSTALL_HOOK_ORIG(logger, LevelCollectionNavigationController_DidActivate);
 
-    SongCore::API::Loading::GetCustomLevelPacksWillRefreshEvent().addCallback(
-        [](SongCore::SongLoader::CustomBeatmapLevelsRepository* customBeatmapLevelsRepository) { LoadPlaylists(customBeatmapLevelsRepository, true); }
-    );
+    SongCore::API::Loading::GetCustomLevelPacksWillRefreshEvent() +=
+        [](SongCore::SongLoader::CustomBeatmapLevelsRepository* customBeatmapLevelsRepository) {
+            LoadPlaylists(customBeatmapLevelsRepository, true);
+        };
 
     LOG_INFO("Successfully installed PlaylistCore!");
 }

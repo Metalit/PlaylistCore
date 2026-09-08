@@ -1,11 +1,13 @@
 #pragma once
 
+#include "custom-types/shared/macros.hpp"
+
 #include "GlobalNamespace/IVRPlatformHelper.hpp"
+#include "GlobalNamespace/IXRSystemState.hpp"
 #include "UnityEngine/EventSystems/PointerEventData.hpp"
 #include "UnityEngine/MonoBehaviour.hpp"
 #include "UnityEngine/RectTransform.hpp"
 #include "UnityEngine/Vector2.hpp"
-#include "custom-types/shared/macros.hpp"
 
 DECLARE_CLASS_CODEGEN(PlaylistCore, Scroller, UnityEngine::MonoBehaviour) {
    private:
@@ -26,4 +28,5 @@ DECLARE_CLASS_CODEGEN(PlaylistCore, Scroller, UnityEngine::MonoBehaviour) {
     DECLARE_INSTANCE_FIELD(float, destinationPos);
 
     DECLARE_INSTANCE_FIELD(GlobalNamespace::IVRPlatformHelper*, platformHelper);
+    DECLARE_INSTANCE_FIELD(GlobalNamespace::IXRSystemState*, systemState);
 };

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "beatsaber-hook/shared/utils/logging.hpp"
+#include "paper2_scotland2/shared/logger.hpp"
 
 static constexpr auto logger = Paper::ConstLoggerContext(MOD_ID);
 
@@ -13,10 +13,10 @@ static constexpr auto logger = Paper::ConstLoggerContext(MOD_ID);
 
 #define LOWER(string) std::transform(string.begin(), string.end(), string.begin(), tolower)
 
-#define CustomLevelPackPrefixID "custom_levelPack_"
-#define CustomLevelsPackID CustomLevelPackPrefixID "CustomLevels"
-#define CustomWIPLevelsPackID CustomLevelPackPrefixID "CustomWIPLevels"
-
 std::string GetPlaylistsPath();
 std::string GetConfigPath();
 std::string GetCoversPath();
+
+#include "songcore/shared/SongLoader/RuntimeSongLoader.hpp"
+
+#define CustomLevelPackPrefixID SongCore::SongLoader::RuntimeSongLoader::CUSTOM_LEVEL_PACK_PREFIX_ID

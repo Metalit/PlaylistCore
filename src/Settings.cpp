@@ -1,19 +1,20 @@
 #include "Settings.hpp"
 
+#include "Main.hpp"
+#include "PlaylistCore.hpp"
+#include "ResettableStaticPtr.hpp"
+#include "bsml/shared/BSML-Lite.hpp"
+#include "metacore-bs/shared/ui.hpp"
+
 #include "CustomTypes/CoverTableCell.hpp"
 #include "CustomTypes/CustomListSource.hpp"
 #include "GlobalNamespace/MenuTransitionsHelper.hpp"
 #include "HMUI/ScrollView.hpp"
 #include "HMUI/TableView.hpp"
 #include "HMUI/Touchable.hpp"
-#include "Main.hpp"
-#include "PlaylistCore.hpp"
-#include "ResettableStaticPtr.hpp"
 #include "Types/Config.hpp"
 #include "Types/Scroller.hpp"
 #include "UnityEngine/Resources.hpp"
-#include "bsml/shared/BSML-Lite.hpp"
-#include "metacore/shared/ui.hpp"
 
 DEFINE_TYPE(PlaylistCore, SettingsViewController);
 

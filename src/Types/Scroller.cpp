@@ -1,15 +1,17 @@
 #include "Types/Scroller.hpp"
 
+#include "Main.hpp"
+#include "ResettableStaticPtr.hpp"
+#include "bsml/shared/Helpers/getters.hpp"
+#include "metacore/shared/delegates.hpp"
+
 #include "GlobalNamespace/AnnotatedBeatmapLevelCollectionsGridViewAnimator.hpp"
 #include "GlobalNamespace/VRController.hpp"
 #include "HMUI/EventSystemListener.hpp"
-#include "Main.hpp"
-#include "ResettableStaticPtr.hpp"
 #include "Types/Config.hpp"
 #include "UnityEngine/GameObject.hpp"
 #include "UnityEngine/Rect.hpp"
 #include "UnityEngine/Time.hpp"
-#include "metacore/shared/delegates.hpp"
 
 // a scroller in multiple ways specialized for the playlist grid
 // however, it could likely be made more versatile with a few changes
@@ -25,8 +27,6 @@ using namespace PlaylistCore;
 float fixedCellHeight = 15;
 
 void Scroller::Awake() {
-    platformHelper = FindComponent<GlobalNamespace::VRController*>()->_vrPlatformHelper;
-
     auto eventListener = GetComponent<HMUI::EventSystemListener*>();
     if (!eventListener)
         eventListener = get_gameObject()->AddComponent<HMUI::EventSystemListener*>();
@@ -37,9 +37,13 @@ void Scroller::Awake() {
 }
 
 void Scroller::Update() {
-    if (!contentTransform || !platformHelper)
+    if (!contentTransform)
         return;
-    if (platformHelper->hasInputFocus) {
+    if (!platformHelper)
+        platformHelper = BSML::Helpers::GetIVRPlatformHelper();
+    if (!systemState)
+        systemState = BSML::Helpers::GetIXRSystemState();
+    if (systemState->hasInputFocus) {
         auto anyJoystickMaxAxis = platformHelper->GetAnyJoystickMaxAxis();
         if (anyJoystickMaxAxis.sqrMagnitude > 0.01)
             HandleJoystickWasNotCenteredThisFrame(anyJoystickMaxAxis);
