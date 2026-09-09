@@ -5,7 +5,7 @@
 #include "beatsaber-hook/shared/hooking.hpp"
 #include "beatsaber-hook/shared/utils.hpp"
 #include "bsml/shared/BSML.hpp"
-#include "bsml/shared/helpers/getters.hpp"
+#include "bsml/shared/Helpers/getters.hpp"
 #include "songcore/shared/SongCore.hpp"
 
 #include "GlobalNamespace/AnnotatedBeatmapLevelCollectionCell.hpp"
