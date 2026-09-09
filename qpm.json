@@ -6,7 +6,7 @@
   "info": {
     "name": "PlaylistCore",
     "id": "playlistcore",
-    "version": "1.6.0",
+    "version": "1.7.0",
     "url": "https://github.com/Metalit/PlaylistCore",
     "additionalData": {
       "overrideSoName": "libplaylistcore.so",
@@ -125,7 +125,9 @@
     {
       "id": "config-utils",
       "versionRange": "^3.0.0",
-      "additionalData": {}
+      "additionalData": {
+        "private": true
+      }
     },
     {
       "id": "reflectcpp",
@@ -135,7 +137,9 @@
     {
       "id": "metacore-bs",
       "versionRange": "^1.0.0",
-      "additionalData": {}
+      "additionalData": {
+        "private": true
+      }
     }
   ]
 }

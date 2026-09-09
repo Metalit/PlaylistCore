@@ -1,7 +1,6 @@
 #include "PlaylistCore.hpp"
 
 #include "Main.hpp"
-#include "ResettableStaticPtr.hpp"
 #include "Settings.hpp"
 #include "SpriteCache.hpp"
 #include "Utils.hpp"

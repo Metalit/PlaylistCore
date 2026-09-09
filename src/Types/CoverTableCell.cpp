@@ -1,10 +1,11 @@
 #include "CustomTypes/CoverTableCell.hpp"
 
 #include "Main.hpp"
-#include "ResettableStaticPtr.hpp"
 #include "bsml/shared/BSML-Lite.hpp"
 
 #include "GlobalNamespace/AnnotatedBeatmapLevelCollectionCell.hpp"
+#include "GlobalNamespace/AnnotatedBeatmapLevelCollectionsGridView.hpp"
+#include "GlobalNamespace/AnnotatedBeatmapLevelCollectionsViewController.hpp"
 #include "UnityEngine/GameObject.hpp"
 #include "UnityEngine/Resources.hpp"
 
@@ -42,13 +43,11 @@ void CoverTableCell::refreshVisuals() {
 
 void CoverTableCell::init(UnityEngine::Sprite* sprite, std::string text) {
     // get rounded sprite
-    auto cell = FindComponent<GlobalNamespace::AnnotatedBeatmapLevelCollectionCell*>();
-    STATIC_AUTO(roundedSprite, cell->_selectionImage->get_sprite().ptr());
-    // rounded corner material for the image
-    STATIC_AUTO(roundedCornerMaterial, cell->_coverImage->get_material().ptr());
+    auto cell = GetLevelFilteringNavigationController()
+                    ->_annotatedBeatmapLevelCollectionsViewController->_annotatedBeatmapLevelCollectionsGridView->_cellPrefab;
     coverImage = Lite::CreateImage(get_transform(), sprite, {0, 0}, {13, 13});
-    coverImage->set_material(roundedCornerMaterial);
-    selectedImage = Lite::CreateImage(get_transform(), roundedSprite, {0, 0}, {20, 20});
+    coverImage->set_material(cell->_coverImage->get_material());
+    selectedImage = Lite::CreateImage(get_transform(), cell->_selectionImage->get_sprite(), {0, 0}, {20, 20});
     selectedImage->set_color({0, 0.753, 1, 1});
     selectedImage->set_color0({1, 1, 1, 1});
     selectedImage->gradient = true;

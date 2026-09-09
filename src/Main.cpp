@@ -1,11 +1,11 @@
 #include "Main.hpp"
 
 #include "PlaylistCore.hpp"
-#include "ResettableStaticPtr.hpp"
 #include "Settings.hpp"
 #include "beatsaber-hook/shared/hooking.hpp"
 #include "beatsaber-hook/shared/utils.hpp"
 #include "bsml/shared/BSML.hpp"
+#include "bsml/shared/helpers/getters.hpp"
 #include "songcore/shared/SongCore.hpp"
 
 #include "GlobalNamespace/AnnotatedBeatmapLevelCollectionCell.hpp"
@@ -20,12 +20,13 @@
 #include "GlobalNamespace/LevelCollectionNavigationController.hpp"
 #include "GlobalNamespace/LevelCollectionTableView.hpp"
 #include "GlobalNamespace/LevelCollectionViewController.hpp"
-#include "GlobalNamespace/LevelFilteringNavigationController.hpp"
 #include "GlobalNamespace/LevelPackDetailViewController.hpp"
+#include "GlobalNamespace/LevelSelectionNavigationController.hpp"
 #include "GlobalNamespace/MenuTransitionsHelper.hpp"
 #include "GlobalNamespace/PageControl.hpp"
 #include "GlobalNamespace/PlayerData.hpp"
 #include "GlobalNamespace/PlayerDataModel.hpp"
+#include "GlobalNamespace/SoloFreePlayFlowCoordinator.hpp"
 #include "GlobalNamespace/SongPreviewPlayer.hpp"
 #include "GlobalNamespace/StandardLevelDetailViewController.hpp"
 #include "HMUI/FlowCoordinator.hpp"
@@ -60,6 +61,11 @@ std::string GetPlaylistsPath() {
 std::string GetCoversPath() {
     static std::string coversPath(get_data_dir(managerModInfo) + "Covers");
     return coversPath;
+}
+
+GlobalNamespace::LevelFilteringNavigationController* GetLevelFilteringNavigationController() {
+    return BSML::Helpers::GetMainFlowCoordinator()
+        ->_soloFreePlayFlowCoordinator->levelSelectionNavigationController->_levelFilteringNavigationController;
 }
 
 // override header cell behavior and change no data prefab
@@ -107,7 +113,7 @@ MAKE_HOOK_MATCH(
         // because if they do then the only way to get here with that specific no data indicator is to have no playlists filtered
         static ConstString message("No playlists are contained in the filtering options selected.");
         if (GetLoadedPlaylists().size() > 0 && !SongCore::API::Loading::GetAllLevels().empty() &&
-            noDataInfoPrefab == FindComponent<LevelFilteringNavigationController*>()->_emptyCustomSongListInfoPrefab.ptr())
+            noDataInfoPrefab == GetLevelFilteringNavigationController()->_emptyCustomSongListInfoPrefab.ptr())
             self->_noDataInfoGO->GetComponentInChildren<TMPro::TextMeshProUGUI*>()->set_text(message);
         self->_levelCollectionTableView->get_gameObject()->SetActive(false);
     }
@@ -226,8 +232,6 @@ MAKE_HOOK_MATCH(
     hasLoaded = false;
 
     MenuTransitionsHelper_RestartGame(self, finishCallback);
-
-    ResettableStaticPtr::resetAll();
 }
 
 // override to prevent crashes due to opening with a null level pack

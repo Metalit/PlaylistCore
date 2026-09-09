@@ -2,6 +2,7 @@
 
 #include "custom-types/shared/macros.hpp"
 
+#include "GlobalNamespace/AnnotatedBeatmapLevelCollectionsGridViewAnimator.hpp"
 #include "GlobalNamespace/IVRPlatformHelper.hpp"
 #include "GlobalNamespace/IXRSystemState.hpp"
 #include "UnityEngine/EventSystems/PointerEventData.hpp"
@@ -24,6 +25,7 @@ DECLARE_CLASS_CODEGEN(PlaylistCore, Scroller, UnityEngine::MonoBehaviour) {
 
     DECLARE_INSTANCE_METHOD(void, SetDestinationPos, float value);
 
+    DECLARE_INSTANCE_FIELD(GlobalNamespace::AnnotatedBeatmapLevelCollectionsGridViewAnimator*, gridViewAnimator);
     DECLARE_INSTANCE_FIELD(UnityEngine::RectTransform*, contentTransform);
     DECLARE_INSTANCE_FIELD(float, destinationPos);
 

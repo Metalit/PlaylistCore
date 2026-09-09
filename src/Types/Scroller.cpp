@@ -1,11 +1,11 @@
 #include "Types/Scroller.hpp"
 
 #include "Main.hpp"
-#include "ResettableStaticPtr.hpp"
 #include "bsml/shared/Helpers/getters.hpp"
 #include "metacore/shared/delegates.hpp"
 
-#include "GlobalNamespace/AnnotatedBeatmapLevelCollectionsGridViewAnimator.hpp"
+#include "GlobalNamespace/AnnotatedBeatmapLevelCollectionsGridView.hpp"
+#include "GlobalNamespace/AnnotatedBeatmapLevelCollectionsViewController.hpp"
 #include "GlobalNamespace/VRController.hpp"
 #include "HMUI/EventSystemListener.hpp"
 #include "Types/Config.hpp"
@@ -70,7 +70,10 @@ void Scroller::Init(UnityEngine::RectTransform* content) {
 
 void Scroller::HandlePointerDidEnter(UnityEngine::EventSystems::PointerEventData* pointerEventData) {
     pointerHovered = true;
-    float pos = FindComponent<GlobalNamespace::AnnotatedBeatmapLevelCollectionsGridViewAnimator*>()->GetContentYOffset();
+    if (!gridViewAnimator)
+        gridViewAnimator = GetLevelFilteringNavigationController()
+                               ->_annotatedBeatmapLevelCollectionsViewController->_annotatedBeatmapLevelCollectionsGridView->_animator;
+    float pos = gridViewAnimator->GetContentYOffset();
     SetDestinationPos(pos);
 }
 

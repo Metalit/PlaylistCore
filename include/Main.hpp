@@ -14,9 +14,12 @@ static constexpr auto logger = Paper::ConstLoggerContext(MOD_ID);
 #define LOWER(string) std::transform(string.begin(), string.end(), string.begin(), tolower)
 
 std::string GetPlaylistsPath();
-std::string GetConfigPath();
 std::string GetCoversPath();
 
 #include "songcore/shared/SongLoader/RuntimeSongLoader.hpp"
 
 #define CustomLevelPackPrefixID SongCore::SongLoader::RuntimeSongLoader::CUSTOM_LEVEL_PACK_PREFIX_ID
+
+#include "GlobalNamespace/LevelFilteringNavigationController.hpp"
+
+GlobalNamespace::LevelFilteringNavigationController* GetLevelFilteringNavigationController();

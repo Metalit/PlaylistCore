@@ -25,10 +25,10 @@ DECLARE_CLASS_CODEGEN(PlaylistCore, CustomTableCell, HMUI::TableCell) {
     void refreshVisuals() {
         refreshVisualsFunc();
     }
-    void init(UnityEngine::Sprite * sprite, std::string text) {
+    void init(UnityEngine::Sprite* sprite, std::string text) {
         initFunc(sprite, text);
     }
-    void setSprite(UnityEngine::Sprite * sprite) {
+    void setSprite(UnityEngine::Sprite* sprite) {
         setSpriteFunc(sprite);
     }
     void setText(std::string text) {

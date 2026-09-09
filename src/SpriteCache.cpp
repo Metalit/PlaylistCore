@@ -3,21 +3,19 @@
 #include <map>
 
 #include "UnityEngine/GameObject.hpp"
+#include "UnityEngine/HideFlags.hpp"
 #include "UnityEngine/UI/Image.hpp"
 
 using namespace UnityEngine;
 
-std::unordered_map<Sprite*, GameObject*> caches;
-std::map<std::string, Sprite*, std::less<>> strings;
+std::unordered_map<std::string_view, Sprite*> strings;
+std::unordered_map<Sprite*, std::string> sprites;
 
 void CacheSprite(Sprite* sprite, std::string base64) {
-    if (!caches.contains(sprite)) {
-        static ConstString name("PlaylistCoreCachedSprite");
-        auto object = GameObject::New_ctor(name);
-        object->AddComponent<UI::Image*>()->set_sprite(sprite);
-        Object::DontDestroyOnLoad(object);
-        caches.emplace(sprite, object);
-        strings.emplace(std::move(base64), sprite);
+    if (!strings.contains(base64)) {
+        sprite->hideFlags = UnityEngine::HideFlags::DontSave;
+        sprites.emplace(sprite, std::move(base64));
+        strings.emplace(sprites[sprite], sprite);
     }
 }
 
@@ -29,24 +27,20 @@ Sprite* HasCachedSprite(std::string_view base64) {
 }
 
 void RemoveCachedSprite(Sprite* sprite) {
-    if (caches.contains(sprite)) {
-        Object::Destroy(caches.find(sprite)->second);
-        caches.erase(sprite);
-        for (auto iter = strings.begin(); iter != strings.end(); iter++) {
-            if (iter->second == sprite) {
-                strings.erase(iter);
-                break;
-            }
-        }
+    auto findIter = sprites.find(sprite);
+    if (findIter != sprites.end()) {
+        strings.erase(strings.find(findIter->second));
+        sprites.erase(findIter);
     }
+    sprite->hideFlags = UnityEngine::HideFlags::None;
+    Object::Destroy(sprite);
 }
 
 void ClearCachedSprites() {
-    for (auto& pair : caches) {
-        if (pair.second && pair.second->m_CachedPtr.m_value) {
-            Object::Destroy(pair.second);
-        }
+    for (auto& [sprite, _] : sprites) {
+        sprite->hideFlags = UnityEngine::HideFlags::None;
+        Object::Destroy(sprite);
     }
-    caches.clear();
     strings.clear();
+    sprites.clear();
 }

@@ -2,7 +2,6 @@
 
 #include "Main.hpp"
 #include "PlaylistCore.hpp"
-#include "ResettableStaticPtr.hpp"
 #include "metacore/shared/strings.hpp"
 #include "songcore/shared/SongCore.hpp"
 #include "songcore/shared/SongLoader/RuntimeSongLoader.hpp"
