@@ -18,6 +18,7 @@ std::string GetCoversPath();
 
 #include "songcore/shared/SongLoader/RuntimeSongLoader.hpp"
 
+#define CustomLevelPrefixID SongCore::SongLoader::RuntimeSongLoader::CUSTOM_LEVEL_PREFIX_ID
 #define CustomLevelPackPrefixID SongCore::SongLoader::RuntimeSongLoader::CUSTOM_LEVEL_PACK_PREFIX_ID
 
 #include "GlobalNamespace/LevelFilteringNavigationController.hpp"

@@ -18,7 +18,7 @@ namespace rfl {
         static PlaylistCore::BPSong to(ReflType const& v) {
             if (!v.hash && !v.levelid)
                 throw std::runtime_error("levelid or hash is required");
-            auto levelid = v.levelid ? *v.levelid : CustomLevelPackPrefixID + *v.hash;
+            auto levelid = v.levelid ? *v.levelid : CustomLevelPrefixID + *v.hash;
             return {levelid, v.hash, v.songName, v.key, v.difficulties, v.extraFields};
         }
 
