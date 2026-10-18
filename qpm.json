@@ -76,7 +76,7 @@
     },
     {
       "id": "beatsaber-hook",
-      "versionRange": "^9.2.0",
+      "versionRange": "^9.3.0",
       "additionalData": {}
     },
     {
@@ -86,12 +86,12 @@
     },
     {
       "id": "custom-types",
-      "versionRange": "^0.21.1",
+      "versionRange": "^0.21.2",
       "additionalData": {}
     },
     {
       "id": "metacore",
-      "versionRange": "^2.0.5",
+      "versionRange": "^2.0.6",
       "additionalData": {
         "includeQmod": false,
         "private": true
@@ -99,7 +99,7 @@
     },
     {
       "id": "bsml",
-      "versionRange": "^0.6.3",
+      "versionRange": "^0.6.5",
       "additionalData": {
         "includeQmod": false,
         "private": true
