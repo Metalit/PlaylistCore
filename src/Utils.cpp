@@ -6,6 +6,7 @@
 #include "songcore/shared/SongCore.hpp"
 #include "songcore/shared/SongLoader/RuntimeSongLoader.hpp"
 
+#include <algorithm>
 #include <filesystem>
 
 #include "GlobalNamespace/AnnotatedBeatmapLevelCollectionsGridView.hpp"
@@ -63,6 +64,8 @@ namespace PlaylistCore {
 
         std::string GetNewPlaylistPath(std::string title) {
             std::string fileTitle = MetaCore::Strings::SanitizedPath(title);
+            // A playlist title is a single filename, not a path with subdirectories.
+            std::replace(fileTitle.begin(), fileTitle.end(), '/', '_');
             while (!UniqueFileName(fileTitle + ".bplist", GetPlaylistsPath()))
                 fileTitle = "_" + fileTitle;
             return GetPlaylistsPath() + "/" + fileTitle + ".bplist";

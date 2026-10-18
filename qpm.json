@@ -6,7 +6,7 @@
   "info": {
     "name": "PlaylistCore",
     "id": "playlistcore",
-    "version": "1.7.0",
+    "version": "1.7.2",
     "url": "https://github.com/Metalit/PlaylistCore",
     "additionalData": {
       "overrideSoName": "libplaylistcore.so",
@@ -66,7 +66,7 @@
     },
     {
       "id": "paper2_scotland2",
-      "versionRange": "^4.7.0",
+      "versionRange": "^4.8.0",
       "additionalData": {}
     },
     {
@@ -76,36 +76,38 @@
     },
     {
       "id": "beatsaber-hook",
-      "versionRange": "^8.0.0",
+      "versionRange": "^9.3.0",
       "additionalData": {}
     },
     {
       "id": "bs-cordl",
-      "versionRange": "^4500.0.0",
+      "versionRange": "^4503.0.0",
       "additionalData": {}
     },
     {
       "id": "custom-types",
-      "versionRange": "^0.20.0",
+      "versionRange": "^0.21.2",
       "additionalData": {}
     },
     {
       "id": "metacore",
-      "versionRange": "^2.0.3",
+      "versionRange": "^2.0.6",
       "additionalData": {
+        "includeQmod": false,
         "private": true
       }
     },
     {
       "id": "bsml",
-      "versionRange": "^0.5.5",
+      "versionRange": "^0.6.5",
       "additionalData": {
+        "includeQmod": false,
         "private": true
       }
     },
     {
       "id": "web-utils",
-      "versionRange": "^0.6.8",
+      "versionRange": "^0.6.9",
       "additionalData": {
         "private": true
       }
@@ -119,8 +121,10 @@
     },
     {
       "id": "songcore",
-      "versionRange": "^1.3.1",
-      "additionalData": {}
+      "versionRange": "^1.3.5",
+      "additionalData": {
+        "includeQmod": false
+      }
     },
     {
       "id": "config-utils",
@@ -136,8 +140,9 @@
     },
     {
       "id": "metacore-bs",
-      "versionRange": "^1.0.0",
+      "versionRange": "^1.0.1",
       "additionalData": {
+        "includeQmod": false,
         "private": true
       }
     }
