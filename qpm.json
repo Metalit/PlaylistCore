@@ -93,7 +93,6 @@
       "id": "metacore",
       "versionRange": "^2.0.6",
       "additionalData": {
-        "includeQmod": false,
         "private": true
       }
     },
@@ -101,7 +100,6 @@
       "id": "bsml",
       "versionRange": "^0.6.5",
       "additionalData": {
-        "includeQmod": false,
         "private": true
       }
     },
@@ -122,9 +120,7 @@
     {
       "id": "songcore",
       "versionRange": "^1.3.5",
-      "additionalData": {
-        "includeQmod": false
-      }
+      "additionalData": {}
     },
     {
       "id": "config-utils",
@@ -142,7 +138,6 @@
       "id": "metacore-bs",
       "versionRange": "^1.0.1",
       "additionalData": {
-        "includeQmod": false,
         "private": true
       }
     }
