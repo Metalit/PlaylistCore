@@ -256,11 +256,12 @@ MAKE_HOOK_MATCH(
         COMBINE(self->_levelDetailViewController->didChangeContentEvent, HandleLevelDetailViewControllerDidPresentContent);
         COMBINE(self->_levelDetailViewController->didPressOpenLevelPackButtonEvent, HandleLevelDetailViewControllerDidPressOpenLevelPackButton);
         COMBINE(self->_levelDetailViewController->levelFavoriteStatusDidChangeEvent, HandleLevelDetailViewControllerLevelFavoriteStatusDidChange);
+        // SetData presents the collection when loading finishes; keep selection pending meanwhile.
         if (self->_beatmapLevelToBeSelectedAfterPresent) {
             self->_levelCollectionViewController->SelectLevel(self->_beatmapLevelToBeSelectedAfterPresent);
-            self->SetChildViewController(self->_levelCollectionViewController);
+            if (!self->_loading) self->SetChildViewController(self->_levelCollectionViewController);
             self->_beatmapLevelToBeSelectedAfterPresent = nullptr;
-        } else {
+        } else if (!self->_loading) {
             // override here so that the pack detail controller will not be shown if no pack is selected
             if (self->_levelPack) {
                 ArrayW<HMUI::ViewController*> children{2};
