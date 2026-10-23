@@ -1,5 +1,7 @@
 #include "Main.hpp"
 
+#include <filesystem>
+
 #include "PlaylistCore.hpp"
 #include "Settings.hpp"
 #include "beatsaber-hook/shared/hooking.hpp"
@@ -285,13 +287,14 @@ extern "C" void setup(CModInfo* info) {
     Paper::Logger::RegisterFileContextId(MOD_ID);
 
     auto playlistsPath = GetPlaylistsPath();
-    if (!direxists(playlistsPath))
+    std::error_code directoryError;
+    if (!std::filesystem::is_directory(playlistsPath, directoryError))
         mkpath(playlistsPath);
 
     LOG_INFO("Playlist path is {}", playlistsPath);
 
     auto coversPath = GetCoversPath();
-    if (!direxists(coversPath))
+    if (!std::filesystem::is_directory(coversPath, directoryError))
         mkpath(coversPath);
 
     getConfig().Init(modInfo);
