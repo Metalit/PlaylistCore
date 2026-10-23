@@ -1,5 +1,7 @@
 #include "Main.hpp"
 
+#include <filesystem>
+
 #include "PlaylistCore.hpp"
 #include "Settings.hpp"
 #include "beatsaber-hook/shared/hooking.hpp"
@@ -256,11 +258,12 @@ MAKE_HOOK_MATCH(
         COMBINE(self->_levelDetailViewController->didChangeContentEvent, HandleLevelDetailViewControllerDidPresentContent);
         COMBINE(self->_levelDetailViewController->didPressOpenLevelPackButtonEvent, HandleLevelDetailViewControllerDidPressOpenLevelPackButton);
         COMBINE(self->_levelDetailViewController->levelFavoriteStatusDidChangeEvent, HandleLevelDetailViewControllerLevelFavoriteStatusDidChange);
+        // SetData presents the collection when loading finishes; keep selection pending meanwhile.
         if (self->_beatmapLevelToBeSelectedAfterPresent) {
             self->_levelCollectionViewController->SelectLevel(self->_beatmapLevelToBeSelectedAfterPresent);
-            self->SetChildViewController(self->_levelCollectionViewController);
+            if (!self->_loading) self->SetChildViewController(self->_levelCollectionViewController);
             self->_beatmapLevelToBeSelectedAfterPresent = nullptr;
-        } else {
+        } else if (!self->_loading) {
             // override here so that the pack detail controller will not be shown if no pack is selected
             if (self->_levelPack) {
                 ArrayW<HMUI::ViewController*> children{2};
@@ -284,13 +287,14 @@ extern "C" void setup(CModInfo* info) {
     Paper::Logger::RegisterFileContextId(MOD_ID);
 
     auto playlistsPath = GetPlaylistsPath();
-    if (!direxists(playlistsPath))
+    std::error_code directoryError;
+    if (!std::filesystem::is_directory(playlistsPath, directoryError))
         mkpath(playlistsPath);
 
     LOG_INFO("Playlist path is {}", playlistsPath);
 
     auto coversPath = GetCoversPath();
-    if (!direxists(coversPath))
+    if (!std::filesystem::is_directory(coversPath, directoryError))
         mkpath(coversPath);
 
     getConfig().Init(modInfo);
