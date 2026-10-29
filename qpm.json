@@ -76,7 +76,7 @@
     },
     {
       "id": "beatsaber-hook",
-      "versionRange": "^9.3.0",
+      "versionRange": "^9.4.1",
       "additionalData": {}
     },
     {
@@ -105,7 +105,7 @@
     },
     {
       "id": "web-utils",
-      "versionRange": "^0.6.9",
+      "versionRange": "^0.6.10",
       "additionalData": {
         "private": true
       }
@@ -136,7 +136,7 @@
     },
     {
       "id": "metacore-bs",
-      "versionRange": "^1.0.1",
+      "versionRange": "^1.0.2",
       "additionalData": {
         "private": true
       }
